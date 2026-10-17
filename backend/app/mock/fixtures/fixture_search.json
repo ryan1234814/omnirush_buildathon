@@ -1,0 +1,53 @@
+{
+  "results": [
+    {
+      "title": "Quantum computing overview",
+      "url": "https://example.com/quantum-computing-overview",
+      "content": "Quantum computers use quantum bits to represent and process information. This fixture is intentionally small and deterministic for offline pipeline checks.",
+      "score": 0.96,
+      "published_date": "2026-01-15"
+    },
+    {
+      "title": "Quantum algorithms and applications",
+      "url": "https://example.com/quantum-algorithms",
+      "content": "Quantum algorithms use phenomena such as superposition and interference to solve selected problems. Practical applications remain an active research area.",
+      "score": 0.88,
+      "published_date": "2026-02-02"
+    },
+    {
+      "title": "Preparing for fault-tolerant quantum systems",
+      "url": "https://example.com/fault-tolerant-quantum",
+      "content": "Error correction, hardware quality, and scalable control are important milestones on the path toward fault-tolerant quantum computing.",
+      "score": 0.81,
+      "published_date": "2026-02-20"
+    },
+    {
+      "title": "Quantum computing hardware",
+      "url": "https://example.com/quantum-hardware",
+      "content": "Quantum hardware research compares superconducting, trapped-ion, photonic, and neutral-atom approaches. Each platform balances scale, coherence, control, and manufacturing complexity.",
+      "score": 0.79,
+      "published_date": "2026-03-04"
+    },
+    {
+      "title": "Quantum software ecosystems",
+      "url": "https://example.com/quantum-software",
+      "content": "Quantum software combines circuit design, classical orchestration, simulators, and hardware-aware compilation. Open tooling helps researchers compare algorithms across different devices.",
+      "score": 0.74,
+      "published_date": "2026-03-12"
+    },
+    {
+      "title": "Quantum security planning",
+      "url": "https://example.com/quantum-security",
+      "content": "Organizations are planning migration to post-quantum cryptography while tracking the future impact of quantum algorithms on public-key encryption and long-lived data.",
+      "score": 0.7,
+      "published_date": "2026-03-25"
+    },
+    {
+      "title": "Deliberately unavailable fixture source",
+      "url": "http://127.0.0.1:9/phase-3-dead-source",
+      "content": "",
+      "score": 0.99,
+      "published_date": "2026-04-01"
+    }
+  ]
+}

@@ -4,6 +4,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.health import router as health_router
+from app.api.reports import router as reports_router
+from app.config import get_settings
+from app.events.bus import EventBus
+from app.storage import load_snapshots
 
 app = FastAPI(
     title="One-Click Research Report Agent",
@@ -19,4 +23,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.state.event_bus = EventBus()
+app.state.report_tasks = set()
+app.state.settings = get_settings()
+for snapshot in load_snapshots(app.state.settings.runs_dir):
+    app.state.event_bus.restore(snapshot)
+
 app.include_router(health_router)
+app.include_router(reports_router)

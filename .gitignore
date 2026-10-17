@@ -10,3 +10,5 @@ node_modules/
 *.pdf
 *.log
 .DS_Store
+data/runs/
+backend/data/runs/

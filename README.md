@@ -1,14 +1,15 @@
 # One-Click Research Report Agent
 
 Type a topic, watch an agent research the web, and receive a professional report with
-deterministic inline citations. This repository currently contains **Phase 1**: the
-reproducible backend configuration/health foundation and a frontend mission-control scaffold.
+deterministic inline citations. This repository contains the reproducible backend
+configuration/health foundation and the Phase 2 search/query-planning integration seam. The
+frontend remains a mission-control scaffold until the later UI phase.
 
 ## Stack
 
 - Python 3.12, FastAPI, and Uvicorn
 - OpenAI-compatible API configuration through the `openai` SDK settings
-- Tavily, Serper, or mock search provider settings (provider integrations arrive in later phases)
+- Tavily or mock search providers for the Phase 2 integration seam
 - Vite, React, and TypeScript
 
 ## Prerequisites
@@ -29,7 +30,8 @@ cd ../frontend
 npm install
 ```
 
-The `.env` file is local-only and is ignored by git. API keys are optional for Phase 1.
+The `.env` file is local-only and is ignored by git. API keys are optional for offline development;
+set `OPENAI_API_KEY` and `TAVILY_API_KEY` in `.env` to run the real integration check.
 
 The backend also supports the alternative editable-install workflow requested by the product
 plan:
@@ -39,6 +41,83 @@ cd backend
 python -m venv .venv
 . .venv/bin/activate
 pip install -e .
+```
+
+## Phase 2 integration check
+
+The planner makes one JSON-mode LLM call and falls back to the original topic if the key, request,
+or response is invalid. Search providers share one async interface; `MOCK_MODE=true` uses the
+committed fixture and makes no network calls.
+
+Run the deterministic offline check:
+
+```sh
+cd backend
+MOCK_MODE=true SEARCH_PROVIDER=mock uv run --offline python -m scripts.integration_check "quantum computing 2026"
+```
+
+Run the real Tavily check after configuring both API keys:
+
+```sh
+cd backend
+uv run python -m scripts.integration_check "quantum computing 2026"
+```
+
+The script prints planned sub-queries, normalized raw search results, and one Tavily extract. A
+provider failure is reported as a short error with a non-zero exit code rather than a traceback.
+The real-API ten-run checkpoint is intentionally an operator action because credentials and quota
+are not stored in this repository.
+
+Phase 3 extends the check with concurrent extraction, URL deduplication, quality ranking, and a
+`TOP_K` cap (default `6`). Tavily extraction has a 15-second timeout per source. Failed or empty
+Tavily extracts fall back to an HTTP fetch with a mobile user agent and a 10-second timeout, then
+`trafilatura`; an individual dead source is skipped without failing the run.
+
+Run the complete offline Phase 3 check:
+
+```sh
+cd backend
+MOCK_MODE=true SEARCH_PROVIDER=mock TOP_K=6 \
+  uv run --offline python -m scripts.integration_check "quantum computing 2026"
+```
+
+## Phase 4–5 report API
+
+The backend now builds a bounded citation registry, validates generated `[n]` citations, and
+generates the `## Sources` section deterministically from registry data. It also exposes a
+background report API with replayable Server-Sent Events. Snapshots are persisted as JSON under
+`data/runs` (override with `RUNS_DIR`); run the demo with one Uvicorn worker so the in-memory event
+bus and task registry remain consistent. `SYNTHESIS_CONTEXT_TOKENS` defaults to `3000` so the
+default Groq configuration remains below its 8,000-token-per-minute request limit; it can be
+raised for providers with larger limits, up to the registry's 24,000-token safety budget.
+
+Run the complete offline API flow:
+
+```sh
+cd backend
+MOCK_MODE=true SEARCH_PROVIDER=mock \
+  uv run uvicorn app.main:app --host 127.0.0.1 --port 8000
+```
+
+In another terminal:
+
+```sh
+run_id=$(curl -sS -X POST http://127.0.0.1:8000/api/reports \
+  -H 'content-type: application/json' \
+  -d '{"topic":"quantum computing 2026"}' | python -c \
+  'import json,sys; print(json.load(sys.stdin)["id"])')
+curl -N http://127.0.0.1:8000/api/reports/$run_id/events
+curl -sS http://127.0.0.1:8000/api/reports/$run_id/report.md
+```
+
+The SSE stream emits stage events, per-source `source_fetched` events, streamed `report_token`
+events, and a terminal `run_completed` or `run_failed` event. `Last-Event-ID` replays missed events.
+
+Generate the Phase 4 checkpoint artifact without any network access:
+
+```sh
+cd backend
+uv run --offline python -m scripts.mock_report_check --output report.md
 ```
 
 ## Run
