@@ -1,0 +1,266 @@
+#root {
+  min-height: 100vh;
+}
+
+.mission-control {
+  width: min(1180px, calc(100% - 48px));
+  margin: 0 auto;
+  padding: 28px 0 80px;
+}
+
+.topbar,
+.section-heading,
+.input-row,
+.examples,
+.connection-status {
+  display: flex;
+  align-items: center;
+}
+
+.topbar {
+  justify-content: space-between;
+  border-bottom: 1px solid #1e2733;
+  padding-bottom: 22px;
+}
+
+.brand-mark {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  margin-right: 12px;
+  place-items: center;
+  border: 1px solid #9fe870;
+  color: #9fe870;
+  font-weight: 700;
+}
+
+.topbar > div:nth-child(2) {
+  flex: 1;
+}
+
+.eyebrow {
+  margin: 0;
+  color: #788493;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+
+.eyebrow.accent {
+  color: #9fe870;
+}
+
+.brand-name {
+  margin: 2px 0 0;
+  color: #f4f7fb;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.connection-status,
+.phase-label {
+  color: #9aa6b5;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
+.status-dot {
+  width: 7px;
+  height: 7px;
+  margin-right: 8px;
+  border-radius: 50%;
+  background: #9fe870;
+  box-shadow: 0 0 12px #9fe870;
+}
+
+.hero-section {
+  max-width: 840px;
+  padding: 112px 0 120px;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin-top: 0;
+}
+
+h1 {
+  max-width: 760px;
+  margin-bottom: 24px;
+  color: #f6f8fb;
+  font-size: clamp(3rem, 8vw, 6.7rem);
+  font-weight: 500;
+  letter-spacing: -0.075em;
+  line-height: 0.94;
+}
+
+.hero-copy {
+  max-width: 560px;
+  margin-bottom: 44px;
+  color: #9aa6b5;
+  font-size: 1.12rem;
+  line-height: 1.65;
+}
+
+.topic-form label {
+  display: block;
+  margin-bottom: 12px;
+  color: #d5dce5;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.input-row {
+  gap: 10px;
+}
+
+input {
+  min-width: 0;
+  flex: 1;
+  border: 1px solid #33404e;
+  border-radius: 4px;
+  outline: none;
+  padding: 17px 18px;
+  color: #f4f7fb;
+  background: #111720;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+input:focus {
+  border-color: #9fe870;
+  box-shadow: 0 0 0 3px rgb(159 232 112 / 12%);
+}
+
+input::placeholder {
+  color: #637080;
+}
+
+.input-row button {
+  border: 1px solid #9fe870;
+  border-radius: 4px;
+  padding: 17px 20px;
+  color: #0a0d0f;
+  background: #9fe870;
+  font-size: 0.82rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.input-row button span {
+  margin-left: 10px;
+  font-size: 1.05rem;
+}
+
+.examples {
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.examples > span {
+  margin-right: 4px;
+  color: #657180;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
+.examples button {
+  border: 1px solid #26313e;
+  border-radius: 3px;
+  padding: 6px 9px;
+  color: #8e9baa;
+  background: transparent;
+  font-size: 0.72rem;
+}
+
+.examples button:hover {
+  border-color: #9fe870;
+  color: #d9f6c9;
+}
+
+.pipeline-preview {
+  border-top: 1px solid #1e2733;
+  padding-top: 28px;
+}
+
+.section-heading {
+  justify-content: space-between;
+  margin-bottom: 22px;
+}
+
+h2 {
+  margin: 7px 0 0;
+  color: #eef2f7;
+  font-size: 1.7rem;
+  font-weight: 500;
+  letter-spacing: -0.04em;
+}
+
+.stage-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.stage-card {
+  min-height: 160px;
+  border: 1px solid #1e2733;
+  border-radius: 4px;
+  padding: 22px;
+  background: #0d1219;
+}
+
+.stage-number {
+  color: #9fe870;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 0.72rem;
+}
+
+h3 {
+  margin: 27px 0 8px;
+  color: #e9eef5;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.stage-card p {
+  margin-bottom: 0;
+  color: #788493;
+  font-size: 0.86rem;
+  line-height: 1.5;
+}
+
+@media (max-width: 680px) {
+  .mission-control {
+    width: min(100% - 32px, 1180px);
+    padding-top: 18px;
+  }
+
+  .connection-status {
+    font-size: 0;
+  }
+
+  .connection-status .status-dot {
+    margin-right: 0;
+  }
+
+  .hero-section {
+    padding: 82px 0 88px;
+  }
+
+  .input-row,
+  .stage-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .input-row {
+    display: grid;
+  }
+
+  .input-row button {
+    width: 100%;
+  }
+}
