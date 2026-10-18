@@ -11,9 +11,18 @@
   box-sizing: border-box;
 }
 
+html {
+  min-width: 320px;
+  background: #080b10;
+}
+
 body {
   min-width: 320px;
+  min-height: 100vh;
   margin: 0;
+  background:
+    radial-gradient(circle at 78% 4%, rgb(32 62 42 / 20%), transparent 32rem),
+    #080b10;
 }
 
 button,
@@ -23,4 +32,9 @@ input {
 
 button {
   cursor: pointer;
+}
+
+::selection {
+  color: #0a0d0f;
+  background: #a8f17d;
 }

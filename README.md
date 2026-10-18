@@ -1,9 +1,8 @@
 # One-Click Research Report Agent
 
 Type a topic, watch an agent research the web, and receive a professional report with
-deterministic inline citations. This repository contains the reproducible backend
-configuration/health foundation and the Phase 2 search/query-planning integration seam. The
-frontend remains a mission-control scaffold until the later UI phase.
+deterministic inline citations. The browser UI is a live mission-control view with replayable
+progress, incremental Markdown rendering, source cards, refresh recovery, and one-click PDF export.
 
 ## Stack
 
@@ -111,7 +110,10 @@ curl -sS http://127.0.0.1:8000/api/reports/$run_id/report.md
 ```
 
 The SSE stream emits stage events, per-source `source_fetched` events, streamed `report_token`
-events, and a terminal `run_completed` or `run_failed` event. `Last-Event-ID` replays missed events.
+events, and a terminal `run_completed` or `run_failed` event. `Last-Event-ID` (or the
+`last_event_id` query cursor used by the frontend wrapper) replays missed events. The frontend
+stores the current run ID in local storage, so refreshing during a one-worker mock run rebuilds
+the timeline and report from the replay stream.
 
 Generate the Phase 4 checkpoint artifact without any network access:
 
@@ -119,6 +121,17 @@ Generate the Phase 4 checkpoint artifact without any network access:
 cd backend
 uv run --offline python -m scripts.mock_report_check --output report.md
 ```
+
+## Live UI and PDF export
+
+When the mock backend is running, open <http://localhost:5173>, select the pre-loaded
+`Quantum computing 2026` example, and click **Start research**. The timeline lights each stage,
+source fetches appear as checkmarks, and the report types itself into the citation-aware viewer.
+Finished reports expose **Save as PDF**, which calls `GET /api/reports/{id}/report.pdf`. The first
+request renders with WeasyPrint and atomically caches the artifact as `data/runs/{id}.pdf`; later
+requests serve the cached file. The Docker image includes the Linux Pango/Cairo libraries needed
+by WeasyPrint. On macOS, install WeasyPrint's native dependencies before running a real PDF export
+(for example, `brew install weasyprint`), or use the reproducible Docker image.
 
 ## Run
 

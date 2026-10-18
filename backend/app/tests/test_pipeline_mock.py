@@ -49,6 +49,10 @@ async def test_mock_report_api_completes_and_replays_sse(tmp_path) -> None:
             )
             assert replay.status_code == 200
             assert "event: run_completed" in replay.text
+
+            query_replay = await client.get(f"/api/reports/{run_id}/events?last_event_id=0")
+            assert query_replay.status_code == 200
+            assert "event: run_completed" in query_replay.text
     finally:
         for task in list(app.state.report_tasks):
             if not task.done():
