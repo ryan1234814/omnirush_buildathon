@@ -3,8 +3,12 @@
 from __future__ import annotations
 
 import re
+import shutil
+import subprocess
+import tempfile
 from html import escape
 from html.parser import HTMLParser
+from pathlib import Path
 from typing import Any
 
 import markdown
@@ -302,6 +306,50 @@ def build_html(md: str) -> str:
     )
 
 
+def _render_with_libreoffice(md: str) -> bytes:
+    """Provide a macOS developer fallback when WeasyPrint native libraries are absent.
+
+    Docker and production use WeasyPrint. LibreOffice is only an optional host fallback so a
+    developer can exercise the complete download flow without installing global Pango/GObject
+    libraries. The same generated HTML and embedded report stylesheet are passed to the converter.
+    """
+
+    executable = shutil.which("soffice") or shutil.which("libreoffice")
+    if executable is None:
+        raise RuntimeError(
+            "WeasyPrint is unavailable. Run the backend container or install WeasyPrint's "
+            "native libraries; LibreOffice was not found for the local fallback."
+        )
+
+    with tempfile.TemporaryDirectory(prefix="omnirush-pdf-") as directory:
+        workdir = Path(directory)
+        html_path = workdir / "report.html"
+        pdf_path = workdir / "report.pdf"
+        html_path.write_text(build_html(md), encoding="utf-8")
+        profile = (workdir / "profile").as_uri()
+        result = subprocess.run(
+            [
+                executable,
+                "--headless",
+                f"-env:UserInstallation={profile}",
+                "--convert-to",
+                "pdf",
+                "--outdir",
+                str(workdir),
+                str(html_path),
+            ],
+            capture_output=True,
+            check=False,
+            text=True,
+            timeout=60,
+        )
+        if result.returncode != 0 or not pdf_path.is_file():
+            detail = (result.stderr or result.stdout).strip()
+            suffix = f": {detail}" if detail else ""
+            raise RuntimeError(f"LibreOffice could not render the report PDF{suffix}")
+        return pdf_path.read_bytes()
+
+
 def render_pdf(md: str) -> bytes:
     """Render report Markdown to PDF bytes with WeasyPrint."""
 
@@ -310,10 +358,10 @@ def render_pdf(md: str) -> bytes:
         try:
             from weasyprint import HTML as WeasyPrintHTML
         except (ImportError, OSError) as exc:  # pragma: no cover - platform setup
-            raise RuntimeError(
-                "WeasyPrint is unavailable; install its native libraries or run the "
-                "backend container"
-            ) from exc
+            try:
+                return _render_with_libreoffice(md)
+            except RuntimeError as fallback_exc:
+                raise RuntimeError(str(fallback_exc)) from exc
         HTML = WeasyPrintHTML
     result: Any = HTML(string=build_html(md)).write_pdf()
     if not isinstance(result, bytes):

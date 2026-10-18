@@ -51,6 +51,13 @@ def test_render_pdf_passes_wrapped_html_to_weasyprint(monkeypatch) -> None:
     assert "Offline report" in captured["html"]
 
 
+def test_render_pdf_can_use_local_converter_fallback(monkeypatch) -> None:
+    monkeypatch.setattr(renderer, "HTML", None)
+    monkeypatch.setattr(renderer, "_render_with_libreoffice", lambda _markdown: b"%PDF-fallback")
+
+    assert renderer.render_pdf("# Local fallback") == b"%PDF-fallback"
+
+
 def test_mock_report_pdf_has_sources_and_multiple_pages() -> None:
     markdown = (
         "# Mock research report\n\n"
@@ -68,5 +75,5 @@ def test_mock_report_pdf_has_sources_and_multiple_pages() -> None:
     except RuntimeError as exc:
         pytest.skip(str(exc))
 
-    page_objects = re.findall(rb"/Type /Page(?!s)", pdf)
+    page_objects = re.findall(rb"/Type\s*/Page(?!s)", pdf)
     assert len(page_objects) > 2

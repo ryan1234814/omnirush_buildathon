@@ -131,7 +131,10 @@ Finished reports expose **Save as PDF**, which calls `GET /api/reports/{id}/repo
 request renders with WeasyPrint and atomically caches the artifact as `data/runs/{id}.pdf`; later
 requests serve the cached file. The Docker image includes the Linux Pango/Cairo libraries needed
 by WeasyPrint. On macOS, install WeasyPrint's native dependencies before running a real PDF export
-(for example, `brew install weasyprint`), or use the reproducible Docker image.
+(for example, `brew install weasyprint`), use the reproducible Docker image, or use the optional
+LibreOffice fallback when `soffice` is already available on the developer machine. Docker remains
+the recommended path for release-equivalent output; LibreOffice only exists to keep the local
+download flow usable when Pango/GObject are unavailable.
 
 ## Run
 
