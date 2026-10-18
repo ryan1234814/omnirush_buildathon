@@ -30,10 +30,17 @@ async def stream_report(
     client: AsyncOpenAI | Any | None = None,
     model: str = "",
     mock_mode: bool = False,
+    timeout_seconds: float = 45.0,
 ) -> AsyncIterator[str]:
     """Yield report text chunks from the LLM or deterministic mock synthesizer."""
 
     if mock_mode:
+        if " ".join(topic.casefold().split()) == "synthesis timeout drill":
+            yield (
+                "## Executive summary\n\n"
+                "The first evidence-backed finding was received before the simulated timeout [1].\n"
+            )
+            raise TimeoutError("mock synthesis timeout drill")
         if registry.entries:
             summary = f"Research on **{topic}** is summarized from the supplied excerpts [1]."
         else:
@@ -66,7 +73,7 @@ async def stream_report(
             },
         ],
         "stream": True,
-        "timeout": 60.0,
+        "timeout": timeout_seconds,
     }
     response = None
     for attempt in range(2):

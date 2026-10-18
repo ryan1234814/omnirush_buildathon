@@ -28,6 +28,36 @@ export type ReportSnapshot = {
   report_md: string | null
   created_at: string
   error: string | null
+  outcome?: string
+  message?: string | null
+  no_results?: boolean
+  partial?: boolean
+  synthesis_partial?: boolean
+  incomplete?: boolean
+  incomplete_reason?: string | null
+  results?: number
+  attempted_sources?: number
+  succeeded_sources?: number
+  sources_attempted?: number
+  sources_succeeded?: number
+  attempted?: number
+  succeeded?: number
+  search_calls?: number
+  max_search_calls?: number
+  latency_ms?: number
+  latency_budget_ms?: number
+  budget_exceeded?: boolean
+  metrics?: RunTelemetry
+}
+
+export type RunTelemetry = {
+  latency_ms?: number
+  elapsed_ms?: number
+  latency_budget_ms?: number
+  budget_ms?: number
+  budget_exceeded?: boolean
+  budget_warning?: boolean
+  [key: string]: unknown
 }
 
 export type ReportEventType =
@@ -39,6 +69,22 @@ export type ReportEventType =
   | 'stage_failed'
   | 'run_completed'
   | 'run_failed'
+  | 'no_results'
+  | 'source_skipped'
+  | 'source_dead'
+  | 'synthesis_partial'
+  | 'quota_error'
+  | 'quota_exceeded'
+  | 'provider_quota_error'
+  | 'provider_error'
+  | 'provider_failed'
+  | 'search_error'
+  | 'search_failed'
+  | 'synthesis_failed'
+  | 'latency_warning'
+  | 'budget_warning'
+  | 'latency_budget_warning'
+  | 'latency_budget_exceeded'
 
 export type ReportEventPayload = {
   stage?: RunStage
@@ -49,6 +95,40 @@ export type ReportEventPayload = {
   bytes?: number
   sources?: number
   results?: number
+  result_count?: number
+  attempted?: number
+  succeeded?: number
+  attempted_sources?: number
+  succeeded_sources?: number
+  total?: number
+  source_url?: string
+  reason?: string
+  skip_reason?: string
+  dead_reason?: string
+  message?: string
+  code?: string
+  error_code?: string
+  provider?: string
+  retryable?: boolean
+  quota_exceeded?: boolean
+  partial?: boolean
+  incomplete?: boolean
+  incomplete_reason?: string
+  report_md?: string
+  latency_ms?: number
+  latency?: number
+  elapsed_ms?: number
+  duration_ms?: number
+  latency_budget_ms?: number
+  budget_ms?: number
+  budget?: number
+  budget_seconds?: number
+  within_budget?: boolean
+  budget_status?: string
+  latency_warning?: boolean
+  budget_exceeded?: boolean
+  budget_warning?: boolean
+  metrics?: RunTelemetry
   sub_queries?: string[]
   ids?: number[]
   removed_citations?: number
@@ -138,6 +218,22 @@ const REPORT_EVENT_TYPES: ReportEventType[] = [
   'stage_failed',
   'run_completed',
   'run_failed',
+  'no_results',
+  'source_skipped',
+  'source_dead',
+  'synthesis_partial',
+  'quota_error',
+  'quota_exceeded',
+  'provider_quota_error',
+  'provider_error',
+  'provider_failed',
+  'search_error',
+  'search_failed',
+  'synthesis_failed',
+  'latency_warning',
+  'budget_warning',
+  'latency_budget_warning',
+  'latency_budget_exceeded',
 ]
 
 /**

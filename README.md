@@ -138,6 +138,34 @@ LibreOffice fallback when `soffice` is already available on the developer machin
 the recommended path for release-equivalent output; LibreOffice only exists to keep the local
 download flow usable when Pango/GObject are unavailable.
 
+## Phase 8 hardening and rehearsal
+
+The mock corpus is file-backed under `backend/app/mock/fixtures/pages/` and contains six saved pages
+for `quantum computing 2026`. It also includes deterministic `zero results drill` and `dead source
+drill` and `synthesis timeout drill` topics. Run the offline acceptance check with no provider
+credentials or network access:
+
+```sh
+make phase8-check
+```
+
+The search provider retries one rate-limited request once, shares a hard `MAX_SEARCH_CALLS=8` budget
+per run, and includes call counts in completion telemetry. The pipeline emits explicit no-result,
+skipped-source, partial-synthesis, and latency-budget events. Stage timings are persisted in each run
+snapshot and compared with planning/search/extraction/synthesis budgets of 8/5/25/45 seconds and an
+85-second total target.
+
+After configuring real provider credentials, measure five consecutive real runs:
+
+```sh
+cd backend
+uv run python -m scripts.latency_check --runs 5 --topic "quantum computing 2026"
+```
+
+Use `docs/phase8-rehearsal.md` for the three-dress-rehearsal script, resilience talking points, and
+feature-freeze log. If a real run exceeds the target, first try `TOP_K=5`, a 1,200-word excerpt cap,
+and a shorter synthesis instruction before changing the demo flow.
+
 ## Run
 
 Start the API from the repository root:

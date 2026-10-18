@@ -7,6 +7,8 @@ type ReportViewProps = {
   report: string
   sources: SourceEntry[]
   isStreaming: boolean
+  isPartial?: boolean
+  partialReason?: string
 }
 
 function citationNodes(children: ReactNode): ReactNode {
@@ -73,7 +75,7 @@ function SourceCard({ source }: { source: SourceEntry }) {
   )
 }
 
-function ReportView({ report, sources, isStreaming }: ReportViewProps) {
+function ReportView({ report, sources, isStreaming, isPartial = false, partialReason }: ReportViewProps) {
   const reportBody = report.replace(/(?:^|\n)##\s+Sources\s*[\s\S]*$/i, '').trim()
 
   return (
@@ -85,6 +87,13 @@ function ReportView({ report, sources, isStreaming }: ReportViewProps) {
         </div>
         <span className="phase-label">{isStreaming ? 'STREAMING' : 'MARKDOWN'}</span>
       </div>
+
+      {isPartial && (
+        <div className="report-incomplete-note" role="status">
+          <strong>Incomplete report</strong>
+          <span>{partialReason || 'Synthesis stopped before all planned evidence could be incorporated.'} Review the available citations before relying on this report.</span>
+        </div>
+      )}
 
       <div className="report-body">
          {reportBody ? (

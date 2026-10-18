@@ -19,6 +19,13 @@ class Settings(BaseSettings):
     mock_mode: bool = False
     top_k: int = Field(default=6, ge=1)
     synthesis_context_tokens: int = Field(default=3_000, ge=500)
+    max_search_calls: int = Field(default=8, ge=1)
+    search_retry_backoff_seconds: float = Field(default=0.25, ge=0, le=5)
+    planning_budget_seconds: float = Field(default=8.0, gt=0)
+    search_budget_seconds: float = Field(default=5.0, gt=0)
+    extraction_budget_seconds: float = Field(default=25.0, gt=0)
+    synthesis_budget_seconds: float = Field(default=45.0, gt=0)
+    total_budget_seconds: float = Field(default=85.0, gt=0)
     runs_dir: str = "data/runs"
 
     model_config = SettingsConfigDict(

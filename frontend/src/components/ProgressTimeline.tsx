@@ -4,6 +4,8 @@ export type FetchedSource = {
   url: string
   ok: boolean
   bytes: number
+  status: 'succeeded' | 'skipped' | 'dead'
+  reason?: string
 }
 
 const STAGES: RunStage[] = ['PLANNING', 'SEARCHING', 'EXTRACTING', 'RANKING', 'SYNTHESIZING', 'RENDERING', 'DONE']
@@ -11,6 +13,7 @@ const STAGES: RunStage[] = ['PLANNING', 'SEARCHING', 'EXTRACTING', 'RANKING', 'S
 type ProgressTimelineProps = {
   stage: RunStage
   sourceFetched: number
+  sourceSucceeded: number
   sourceTotal: number | null
   fetchedSources: FetchedSource[]
   eventCount: number
@@ -20,6 +23,7 @@ type ProgressTimelineProps = {
 function ProgressTimeline({
   stage,
   sourceFetched,
+  sourceSucceeded,
   sourceTotal,
   fetchedSources,
   eventCount,
@@ -57,8 +61,9 @@ function ProgressTimeline({
 
       <div className="progress-meta">
         <span>
-          Sources fetched: <strong>{sourceFetched}{sourceTotal !== null ? ` / ${sourceTotal}` : ''}</strong>
+          Sources attempted: <strong>{sourceFetched}{sourceTotal !== null ? ` / ${sourceTotal}` : ''}</strong>
         </span>
+        <span>Sources succeeded: <strong>{sourceSucceeded}</strong></span>
         <span>{eventCount} live events</span>
       </div>
       {fetchedSources.length > 0 && (
@@ -71,10 +76,10 @@ function ProgressTimeline({
               // Keep the original URL for malformed-but-visible source data.
             }
             return (
-              <li className={source.ok ? 'source-fetch ok' : 'source-fetch failed'} key={source.url}>
-                <span className="source-fetch-glyph" aria-hidden="true">{source.ok ? '✓' : '!'}</span>
+              <li className={`source-fetch ${source.status === 'succeeded' ? 'ok' : 'failed'}`} key={source.url}>
+                <span className="source-fetch-glyph" aria-hidden="true">{source.status === 'succeeded' ? '✓' : source.status === 'skipped' ? '–' : '!'}</span>
                 <span>{label}</span>
-                <span className="source-fetch-size">{source.bytes > 0 ? `${source.bytes.toLocaleString()} bytes` : 'unavailable'}</span>
+                <span className="source-fetch-size">{source.reason || (source.bytes > 0 ? `${source.bytes.toLocaleString()} bytes` : 'unavailable')}</span>
               </li>
             )
           })}

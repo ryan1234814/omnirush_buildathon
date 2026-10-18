@@ -53,6 +53,14 @@ class Stage(StrEnum):
     FAILED = "FAILED"
 
 
+class StageTiming(BaseModel):
+    """Monotonic elapsed-time telemetry for one pipeline stage."""
+
+    elapsed_ms: float = Field(ge=0)
+    budget_seconds: float | None = Field(default=None, ge=0)
+    within_budget: bool | None = None
+
+
 class ReportRun(BaseModel):
     """Durable snapshot of one report request."""
 
@@ -66,6 +74,16 @@ class ReportRun(BaseModel):
     report_md: str | None = None
     created_at: datetime
     error: str | None = None
+    outcome: str = "pending"
+    message: str | None = None
+    partial: bool = False
+    stage_timings: dict[str, StageTiming] = Field(default_factory=dict)
+    total_elapsed_ms: float = Field(default=0, ge=0)
+    budget_status: str = "within_budget"
+    search_calls: int = Field(default=0, ge=0)
+    max_search_calls: int = Field(default=8, ge=1)
+    attempted_sources: int = Field(default=0, ge=0)
+    succeeded_sources: int = Field(default=0, ge=0)
 
 
 class RunEvent(BaseModel):

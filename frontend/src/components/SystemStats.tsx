@@ -6,6 +6,7 @@ type SystemStatsProps = {
   status: string
   stage: string
   sourceFetched: number
+  sourceSucceeded: number
   sourceRetained: number
   eventCount: number
   elapsed: string
@@ -22,6 +23,7 @@ function SystemStats({
   status,
   stage,
   sourceFetched,
+  sourceSucceeded,
   sourceRetained,
   eventCount,
   elapsed,
@@ -43,7 +45,8 @@ function SystemStats({
       <div className="stats-grid">
         <div className="stat-cell"><span>Run state</span><strong>{status.toUpperCase()}</strong></div>
         <div className="stat-cell"><span>Current stage</span><strong>{stage}</strong></div>
-        <div className="stat-cell"><span>Fetched</span><strong>{sourceFetched}</strong></div>
+        <div className="stat-cell"><span>Attempted</span><strong>{sourceFetched}</strong></div>
+        <div className="stat-cell"><span>Succeeded</span><strong>{sourceSucceeded}</strong></div>
         <div className="stat-cell"><span>Retained</span><strong>{sourceRetained}</strong></div>
         <div className="stat-cell"><span>Events</span><strong>{eventCount}</strong></div>
         <div className="stat-cell"><span>Elapsed</span><strong>{elapsed}</strong></div>

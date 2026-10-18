@@ -1,0 +1,12 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Quantum software, benchmarking, and workflow design</title></head>
+<body>
+<article>
+<h1>Quantum software, benchmarking, and workflow design</h1>
+<p>Quantum software in 2026 is a layered workflow. A user expresses a circuit or model, a compiler maps it to device operations, a runtime schedules jobs and collects measurements, and classical tools analyze the output. Portability is useful, but a portable circuit still needs hardware-aware optimization to avoid unnecessary depth and routing overhead.</p>
+<p>Benchmarking should preserve the distinction between simulator results, emulated noise, and hardware measurements. Reproducible packages record versions, transpilation settings, seeds, shot counts, calibration context, and the classical reference implementation. Without that record, a reported improvement can be caused by a changed compiler or a favorable sampling choice rather than the algorithm.</p>
+<p>Workflow design also determines cost. Batching, error mitigation, result caching, and adaptive measurement can reduce expensive device calls, while automated validation can flag drift before it contaminates a comparison. Good software makes the limitations of a result visible.</p>
+</article>
+</body>
+</html>

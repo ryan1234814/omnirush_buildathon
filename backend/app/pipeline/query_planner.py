@@ -58,10 +58,10 @@ class QueryPlanner:
             client = AsyncOpenAI(
                 api_key=settings.openai_api_key,
                 base_url=settings.openai_base_url,
-                timeout=60.0,
+                timeout=settings.planning_budget_seconds,
                 max_retries=0,
             )
-        return cls(client, settings.llm_model)
+        return cls(client, settings.llm_model, timeout_seconds=settings.planning_budget_seconds)
 
     async def plan(self, topic: str) -> list[str]:
         """Return 2–4 focused queries, or ``[topic]`` for any planner failure."""

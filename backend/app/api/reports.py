@@ -107,6 +107,8 @@ async def get_report_pdf(run_id: str, request: Request) -> FileResponse:
         raise HTTPException(status_code=404, detail="Report run not found") from exc
     if not snapshot.report_md:
         raise HTTPException(status_code=409, detail="Report is not ready")
+    if snapshot.partial:
+        raise HTTPException(status_code=409, detail="Partial reports cannot be exported")
 
     try:
         cache_path = _pdf_cache_path(snapshot, _settings(request).runs_dir)

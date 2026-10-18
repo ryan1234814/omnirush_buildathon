@@ -1,0 +1,47 @@
+{
+  "topic": "quantum computing 2026",
+  "pages": [
+    {
+      "title": "Quantum computing in 2026: the engineering baseline",
+      "url": "https://offline.mock/quantum-computing-2026/engineering-baseline",
+      "path": "pages/engineering-baseline.html",
+      "score": 0.97,
+      "published_date": "2026-01-12"
+    },
+    {
+      "title": "Fault tolerance and quantum error correction",
+      "url": "https://offline.mock/quantum-computing-2026/fault-tolerance",
+      "path": "pages/fault-tolerance.html",
+      "score": 0.94,
+      "published_date": "2026-02-04"
+    },
+    {
+      "title": "Quantum algorithms beyond the classroom",
+      "url": "https://offline.mock/quantum-computing-2026/algorithms",
+      "path": "pages/algorithms.html",
+      "score": 0.91,
+      "published_date": "2026-02-19"
+    },
+    {
+      "title": "Hardware platforms and scaling trade-offs",
+      "url": "https://offline.mock/quantum-computing-2026/hardware",
+      "path": "pages/hardware.html",
+      "score": 0.88,
+      "published_date": "2026-03-03"
+    },
+    {
+      "title": "Quantum software, benchmarking, and workflow design",
+      "url": "https://offline.mock/quantum-computing-2026/software.html",
+      "path": "pages/software.html",
+      "score": 0.85,
+      "published_date": "2026-03-17"
+    },
+    {
+      "title": "Post-quantum security planning in 2026",
+      "url": "https://offline.mock/quantum-computing-2026/security",
+      "path": "pages/security.html",
+      "score": 0.82,
+      "published_date": "2026-04-02"
+    }
+  ]
+}

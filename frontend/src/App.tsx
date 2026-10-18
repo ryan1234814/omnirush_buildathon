@@ -11,11 +11,12 @@ import {
   type RunStage,
 } from './api/client'
 import PdfDownload from './components/PdfDownload'
-import ProgressTimeline from './components/ProgressTimeline'
+import ProgressTimeline, { type FetchedSource } from './components/ProgressTimeline'
 import ReportView from './components/ReportView'
 import CapabilitiesPanel from './components/CapabilitiesPanel'
 import EventTicker, { type ActivityItem } from './components/EventTicker'
 import RecentRuns, { type HistoryEntry } from './components/RecentRuns'
+import { LatencyBudgetPanel, RunFailureNotice, type RunFailureDetails, ZeroResultsNotice } from './components/RunStateNotices'
 import SourceIntelligence from './components/SourceIntelligence'
 import SystemStats from './components/SystemStats'
 import TopicForm from './components/TopicForm'
@@ -28,10 +29,98 @@ const LAST_RUN_KEY = 'omnirush:last-run-id'
 const HISTORY_KEY = 'omnirush:run-history'
 const INITIAL_TOPIC = 'Quantum computing 2026'
 
-type FetchedSource = {
-  url: string
-  ok: boolean
-  bytes: number
+type LatencyBudget = {
+  latencyMs: number
+  budgetMs: number
+}
+
+function recordValue(record: Record<string, unknown>, keys: string[]): unknown {
+  for (const key of keys) {
+    if (key in record) return record[key]
+  }
+  return undefined
+}
+
+function numberValue(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value)) return value
+  if (typeof value === 'string' && value.trim() && Number.isFinite(Number(value))) return Number(value)
+  return null
+}
+
+function stringValue(value: unknown): string | null {
+  return typeof value === 'string' && value.trim() ? value.trim() : null
+}
+
+function booleanValue(value: unknown): boolean | null {
+  if (typeof value === 'boolean') return value
+  if (value === 'true') return true
+  if (value === 'false') return false
+  return null
+}
+
+function eventUrl(payload: ReportEvent['payload']): string | null {
+  return stringValue(recordValue(payload, ['url', 'source_url']))
+}
+
+function eventReason(payload: ReportEvent['payload']): string | undefined {
+  return stringValue(recordValue(payload, ['reason', 'skip_reason', 'dead_reason', 'error', 'message', 'detail'])) || undefined
+}
+
+function payloadCount(payload: ReportEvent['payload'], keys: string[]): number | null {
+  return numberValue(recordValue(payload, keys))
+}
+
+function readLatencyBudget(source: Record<string, unknown>): LatencyBudget | null {
+  const nested = source.metrics && typeof source.metrics === 'object' && source.metrics !== null
+    ? source.metrics as Record<string, unknown>
+    : {}
+  const read = (keys: string[]) => numberValue(recordValue(source, keys)) ?? numberValue(recordValue(nested, keys))
+  const latencyMs = read(['latency_ms', 'latency', 'elapsed_ms', 'duration_ms'])
+  const budgetSeconds = read(['budget_seconds']) ?? numberValue(recordValue(nested, ['budget_seconds']))
+  const budgetMs = read(['latency_budget_ms', 'budget_ms', 'budget', 'latency_budget'])
+    ?? (budgetSeconds === null ? null : budgetSeconds * 1000)
+  if (latencyMs === null || budgetMs === null) return null
+  return { latencyMs, budgetMs }
+}
+
+function hasLatencyWarning(source: Record<string, unknown>): boolean {
+  const nested = source.metrics && typeof source.metrics === 'object' && source.metrics !== null
+    ? source.metrics as Record<string, unknown>
+    : {}
+  const warning = booleanValue(recordValue(source, ['budget_exceeded', 'budget_warning', 'latency_budget_exceeded', 'latency_warning']))
+    ?? booleanValue(recordValue(nested, ['budget_exceeded', 'budget_warning', 'latency_budget_exceeded', 'latency_warning']))
+  const withinBudget = booleanValue(recordValue(source, ['within_budget']))
+    ?? booleanValue(recordValue(nested, ['within_budget']))
+  const budget = readLatencyBudget(source)
+  return warning === true || withinBudget === false || recordValue(source, ['budget_status']) === 'exceeded' || (budget !== null && budget.latencyMs > budget.budgetMs)
+}
+
+function failureDetails(message: string, payload: ReportEvent['payload'] = {}, eventType = ''): RunFailureDetails {
+  const combined = `${eventType} ${message} ${String(recordValue(payload, ['code', 'error_code', 'provider']) || '')}`.toLowerCase()
+  const quotaFailure = booleanValue(payload.quota_exceeded) === true || /quota|rate limit|429|throttl/.test(combined)
+  const searchFailure = /search/.test(combined)
+  return {
+    message,
+    guidance: quotaFailure
+      ? 'The provider may have reached a quota or rate limit. Wait for the limit to reset, then retry, or edit the topic to use a narrower request.'
+      : searchFailure
+        ? 'The search provider could not return evidence. Check provider configuration or retry with a different topic.'
+        : 'A research provider did not complete this run. Retry the run or edit the topic and try again.',
+    retryable: booleanValue(payload.retryable) !== false,
+  }
+}
+
+function upsertFetchedSource(current: FetchedSource[], nextSource: FetchedSource): FetchedSource[] {
+  const index = current.findIndex((source) => source.url === nextSource.url)
+  if (index < 0) return [...current, nextSource]
+  const next = [...current]
+  next[index] = {
+    ...next[index],
+    ...nextSource,
+    status: nextSource.status === 'dead' && next[index].status === 'skipped' ? 'skipped' : nextSource.status,
+    reason: nextSource.reason ?? next[index].reason,
+  }
+  return next
 }
 
 function readLastRunId(): string | null {
@@ -92,12 +181,19 @@ function App() {
   const [stage, setStage] = useState<RunStage>('PLANNING')
   const [runId, setRunId] = useState<string | null>(null)
   const [sourceCount, setSourceCount] = useState(0)
+  const [sourceSucceeded, setSourceSucceeded] = useState(0)
   const [sourceTotal, setSourceTotal] = useState<number | null>(null)
   const [fetchedSources, setFetchedSources] = useState<FetchedSource[]>([])
   const [eventCount, setEventCount] = useState(0)
   const [report, setReport] = useState('')
   const [sources, setSources] = useState<ReportSnapshot['sources']>([])
+  const [noResults, setNoResults] = useState(false)
+  const [partialReport, setPartialReport] = useState(false)
+  const [partialReason, setPartialReason] = useState('')
   const [error, setError] = useState('')
+  const [failure, setFailure] = useState<RunFailureDetails | null>(null)
+  const [latencyBudget, setLatencyBudget] = useState<LatencyBudget | null>(null)
+  const [latencyWarning, setLatencyWarning] = useState(false)
   const [connectionNote, setConnectionNote] = useState('')
   const [history, setHistory] = useState<HistoryEntry[]>(readHistory)
   const [activity, setActivity] = useState<ActivityItem[]>([])
@@ -130,10 +226,47 @@ function App() {
     setStage(snapshot.stage)
     setSources(snapshot.sources)
     setReport(snapshot.report_md ?? '')
-    setSourceCount(snapshot.sources.length)
-    setSourceTotal(snapshot.sources.length || null)
-    setFetchedSources(snapshot.sources.map((source) => ({ url: source.url, ok: true, bytes: 0 })))
+    const snapshotMetrics = snapshot.metrics ?? {}
+    const attempted = snapshot.attempted_sources
+      ?? snapshot.sources_attempted
+      ?? snapshot.attempted
+      ?? numberValue(snapshotMetrics.attempted_sources)
+      ?? numberValue(snapshotMetrics.sources_attempted)
+    const succeeded = snapshot.succeeded_sources
+      ?? snapshot.sources_succeeded
+      ?? snapshot.succeeded
+      ?? numberValue(snapshotMetrics.succeeded_sources)
+      ?? numberValue(snapshotMetrics.sources_succeeded)
+    if (attempted !== null && attempted !== undefined) {
+      setSourceCount(attempted)
+      setSourceTotal(attempted || null)
+    } else {
+      setSourceCount((count) => count || snapshot.sources.length)
+      setSourceTotal((total) => total || snapshot.sources.length || null)
+    }
+    if (succeeded !== null && succeeded !== undefined) {
+      setSourceSucceeded(succeeded)
+    } else {
+      setSourceSucceeded((count) => count || snapshot.sources.length)
+    }
+    setFetchedSources((current) => current.length > 0 ? current : snapshot.sources.map((source) => ({ url: source.url, ok: true, bytes: 0, status: 'succeeded' })))
+    if ('no_results' in snapshot || 'results' in snapshot || snapshot.outcome) {
+      setNoResults(snapshot.no_results === true || snapshot.results === 0 || snapshot.outcome === 'no_results' || snapshot.outcome === 'no_sources')
+    }
+    const hasPartialField = 'partial' in snapshot || 'synthesis_partial' in snapshot || 'incomplete' in snapshot || snapshot.outcome === 'partial'
+    if (hasPartialField) {
+      const isPartial = snapshot.partial === true || snapshot.synthesis_partial === true || snapshot.incomplete === true
+      setPartialReport(isPartial)
+      setPartialReason(snapshot.incomplete_reason ?? snapshot.message ?? '')
+    }
     setError(snapshot.error ?? '')
+    setFailure(snapshot.status === 'failed' && snapshot.error ? failureDetails(snapshot.error) : null)
+    const snapshotRecord = snapshot as unknown as Record<string, unknown>
+    const hasTelemetryFields = 'latency_ms' in snapshot || 'latency_budget_ms' in snapshot || 'budget_exceeded' in snapshot || 'metrics' in snapshot
+    if (hasTelemetryFields) {
+      setLatencyBudget(readLatencyBudget(snapshotRecord))
+      setLatencyWarning(hasLatencyWarning(snapshotRecord))
+    }
     setStartedAt(Date.parse(snapshot.created_at) || null)
     hydratedReport.current = Boolean(snapshot.report_md)
     updateHistory({ id: snapshot.id, topic: snapshot.topic, status: snapshot.status, createdAt: snapshot.created_at })
@@ -162,29 +295,77 @@ function App() {
     const payload = incoming.payload
     if (payload.stage) setStage(payload.stage)
     if (incoming.type !== 'report_token') {
-      const detail = payload.stage || payload.url || (payload.error ? String(payload.error) : incoming.type.replaceAll('_', ' '))
+      const detail = payload.stage || eventUrl(payload) || (payload.error ? String(payload.error) : eventReason(payload) || incoming.type.replaceAll('_', ' '))
       setActivity((current) => [{ label: incoming.type.replaceAll('_', ' '), detail }, ...current].slice(0, 8))
     }
 
     if (incoming.type === 'source_fetched') {
-      const sourceUrl = payload.url
+      const sourceUrl = eventUrl(payload)
       if (sourceUrl) {
+        const nextSource: FetchedSource = {
+          url: sourceUrl,
+          ok: payload.ok !== false,
+          bytes: numberValue(payload.bytes) ?? 0,
+          status: payload.ok === false ? 'dead' : 'succeeded',
+          reason: eventReason(payload),
+        }
         setFetchedSources((current) => {
-          if (current.some((source) => source.url === sourceUrl)) return current
-          return [
-            ...current,
-            {
-              url: sourceUrl,
-              ok: payload.ok !== false,
-              bytes: typeof payload.bytes === 'number' ? payload.bytes : 0,
-            },
-          ]
+          const next = upsertFetchedSource(current, nextSource)
+          setSourceCount((count) => Math.max(count, payloadCount(payload, ['attempted_sources', 'attempted', 'total']) ?? next.length))
+          setSourceSucceeded(payloadCount(payload, ['succeeded_sources', 'succeeded']) ?? next.filter((source) => source.status === 'succeeded').length)
+          return next
         })
+      } else {
+        setSourceCount((count) => Math.max(count, payloadCount(payload, ['attempted_sources', 'attempted', 'total']) ?? count + 1))
       }
-      setSourceCount((count) => count + 1)
     }
-    if (incoming.type === 'stage_completed' && payload.stage === 'EXTRACTING' && typeof payload.sources === 'number') {
-      setSourceTotal(payload.sources)
+    if (incoming.type === 'source_skipped' || incoming.type === 'source_dead') {
+      const sourceUrl = eventUrl(payload) || `source-${incoming.seq}`
+      const sourceStatus = incoming.type === 'source_skipped' ? 'skipped' : 'dead'
+      const nextSource: FetchedSource = {
+        url: sourceUrl,
+        ok: false,
+        bytes: 0,
+        status: sourceStatus,
+        reason: eventReason(payload) || (sourceStatus === 'skipped' ? 'Skipped by the pipeline' : 'Source could not be reached'),
+      }
+      setFetchedSources((current) => {
+        const next = upsertFetchedSource(current, nextSource)
+        setSourceCount((count) => Math.max(count, payloadCount(payload, ['attempted_sources', 'attempted', 'total']) ?? next.length))
+        setSourceSucceeded(payloadCount(payload, ['succeeded_sources', 'succeeded']) ?? next.filter((source) => source.status === 'succeeded').length)
+        return next
+      })
+    }
+    if (incoming.type === 'stage_completed' && payload.stage === 'EXTRACTING') {
+      const attemptedSources = payloadCount(payload, ['attempted_sources', 'attempted', 'total'])
+      const succeededSources = payloadCount(payload, ['succeeded_sources', 'succeeded'])
+      if (attemptedSources !== null) {
+        setSourceCount(attemptedSources)
+        setSourceTotal(attemptedSources)
+      }
+      if (succeededSources !== null) setSourceSucceeded(succeededSources)
+    }
+    if (incoming.type === 'no_results' || payload.no_results === true || payloadCount(payload, ['results', 'result_count']) === 0) {
+      setNoResults(true)
+    }
+    if (incoming.type === 'synthesis_partial' || payload.partial === true || payload.incomplete === true) {
+      setPartialReport(true)
+      setPartialReason(eventReason(payload) || 'Synthesis stopped before all planned evidence could be incorporated.')
+      if (typeof payload.report_md === 'string' && payload.report_md) {
+        setReport(payload.report_md)
+        hydratedReport.current = true
+      }
+    }
+    if (incoming.type === 'stage_failed' || incoming.type === 'quota_error' || incoming.type === 'quota_exceeded' || incoming.type === 'provider_quota_error' || incoming.type === 'provider_error' || incoming.type === 'provider_failed' || incoming.type === 'search_error' || incoming.type === 'search_failed' || incoming.type === 'synthesis_failed') {
+      const failureMessage = eventReason(payload) || 'The research provider could not complete this stage.'
+      setError(failureMessage)
+      setFailure(failureDetails(failureMessage, payload, incoming.type))
+    }
+    const eventRecord = payload as Record<string, unknown>
+    const nextLatencyBudget = readLatencyBudget(eventRecord)
+    if (nextLatencyBudget) setLatencyBudget(nextLatencyBudget)
+    if (hasLatencyWarning(eventRecord) || incoming.type === 'latency_warning' || incoming.type === 'budget_warning' || incoming.type === 'latency_budget_warning' || incoming.type === 'latency_budget_exceeded') {
+      setLatencyWarning(true)
     }
     if (incoming.type === 'report_token' && !hydratedReport.current && payload.token) {
       setReport((current) => current + payload.token)
@@ -194,7 +375,9 @@ function App() {
       void finishFromSnapshot(id).catch((terminalError: unknown) => {
         if (activeRunId.current !== id) return
         setStatus('error')
-        setError(terminalError instanceof Error ? terminalError.message : 'The finished report could not be loaded.')
+        const terminalMessage = terminalError instanceof Error ? terminalError.message : 'The finished report could not be loaded.'
+        setError(terminalMessage)
+        setFailure(failureDetails(terminalMessage))
         setConnectionNote('')
       })
     }
@@ -203,6 +386,8 @@ function App() {
       setStage('FAILED')
       setStatus('error')
       setError(payload.error || 'The research run failed.')
+      setFailure(failureDetails(payload.error || 'The research run failed.', payload, incoming.type))
+      if (payload.partial === true) setPartialReport(true)
       setConnectionNote('')
       updateHistory({ id, topic, status: 'failed', createdAt: new Date().toISOString() })
     }
@@ -221,6 +406,7 @@ function App() {
         if (activeRunId.current !== id) return
         setStatus('error')
         setError(streamError.message)
+        setFailure(failureDetails(streamError.message))
         setConnectionNote('')
       },
     })
@@ -262,6 +448,16 @@ function App() {
     activeRunId.current = id
     setActivity([])
     setError('')
+    setFailure(null)
+    setNoResults(false)
+    setPartialReport(false)
+    setPartialReason('')
+    setLatencyBudget(null)
+    setLatencyWarning(false)
+    setSourceCount(0)
+    setSourceSucceeded(0)
+    setSourceTotal(null)
+    setFetchedSources([])
     try {
       const snapshot = await getReport(id)
       if (activeRunId.current !== id) return
@@ -275,6 +471,7 @@ function App() {
         setStatus('error')
       } else {
         setSourceCount(0)
+        setSourceSucceeded(0)
         setSourceTotal(null)
         setFetchedSources([])
         setReport('')
@@ -289,28 +486,32 @@ function App() {
         return
       }
       setStatus('error')
-      setError(selectError instanceof Error ? selectError.message : 'This run could not be opened.')
+      const selectMessage = selectError instanceof Error ? selectError.message : 'This run could not be opened.'
+      setError(selectMessage)
+      setFailure(failureDetails(selectMessage))
     }
   }, [applySnapshot, closeStream, connectToRun])
+
+  const selectRunRef = useRef(selectRun)
+  selectRunRef.current = selectRun
 
   useEffect(() => {
     const id = readLastRunId()
     if (!id) return
-    const restoreTimer = window.setTimeout(() => void selectRun(id), 0)
+    const restoreTimer = window.setTimeout(() => void selectRunRef.current(id), 0)
 
     return () => {
       window.clearTimeout(restoreTimer)
       activeRunId.current = null
       closeStream()
     }
-  }, [closeStream, selectRun])
+  }, [closeStream])
 
   useEffect(() => () => closeStream(), [closeStream])
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    const requestedTopic = topic.trim()
-    if (!requestedTopic) {
+  async function startResearch(requestedTopic: string) {
+    const normalizedTopic = requestedTopic.trim()
+    if (!normalizedTopic) {
       setError('Enter a topic before starting research.')
       return
     }
@@ -321,29 +522,68 @@ function App() {
     setStage('PLANNING')
     setRunId(null)
     setSourceCount(0)
+    setSourceSucceeded(0)
     setSourceTotal(null)
     setFetchedSources([])
     setEventCount(0)
     setReport('')
     setSources([])
+    setNoResults(false)
+    setPartialReport(false)
+    setPartialReason('')
     setError('')
+    setFailure(null)
+    setLatencyBudget(null)
+    setLatencyWarning(false)
     setConnectionNote('Starting a new research run…')
-    setActivity([{ label: 'run queued', detail: requestedTopic }])
+    setActivity([{ label: 'run queued', detail: normalizedTopic }])
     setStartedAt(Date.now())
     setElapsedSeconds(0)
     hydratedReport.current = false
 
     try {
-      const created = await createReport(requestedTopic)
+      const created = await createReport(normalizedTopic)
       saveLastRunId(created.id)
-      updateHistory({ id: created.id, topic: requestedTopic, status: 'running', createdAt: new Date().toISOString() })
+      updateHistory({ id: created.id, topic: normalizedTopic, status: 'running', createdAt: new Date().toISOString() })
       setRunId(created.id)
       connectToRun(created.id)
     } catch (requestError) {
       setStatus('error')
       setConnectionNote('')
-      setError(requestError instanceof Error ? requestError.message : 'The research run could not be started.')
+      const requestMessage = requestError instanceof Error ? requestError.message : 'The research run could not be started.'
+      setError(requestMessage)
+      setFailure(failureDetails(requestMessage))
     }
+  }
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    void startResearch(topic)
+  }
+
+  function editTopic(): void {
+    navigateTo('control')
+    window.setTimeout(() => document.getElementById('topic')?.focus(), 0)
+  }
+
+  function tryDifferentTopic(): void {
+    const resetToComposer = () => {
+      closeStream()
+      activeRunId.current = null
+      setStatus('idle')
+      setRunId(null)
+      setTopic('')
+      setError('')
+      setFailure(null)
+      setNoResults(false)
+      setPartialReport(false)
+      setPartialReason('')
+      setReport('')
+      setSources([])
+    }
+    resetToComposer()
+    window.setTimeout(resetToComposer, 0)
+    editTopic()
   }
 
   const statusLabel = status === 'running' ? 'RESEARCH ACTIVE' : status === 'done' ? 'REPORT READY' : status === 'error' ? 'CHECK FAILED' : 'SYSTEM READY'
@@ -382,6 +622,8 @@ function App() {
       </section>
 
       {error && <p className="run-error" role="alert">{error}</p>}
+      {failure && <RunFailureNotice failure={failure} onRetry={() => void startResearch(topic)} onEdit={editTopic} />}
+      {latencyWarning && <LatencyBudgetPanel latencyMs={latencyBudget?.latencyMs ?? null} budgetMs={latencyBudget?.budgetMs ?? null} />}
 
       <section className="dashboard-layout" aria-label="Mission dashboard">
         <div className="dashboard-main-column">
@@ -399,6 +641,7 @@ function App() {
               <ProgressTimeline
                 stage={stage}
                 sourceFetched={sourceCount}
+                sourceSucceeded={sourceSucceeded}
                 sourceTotal={sourceTotal}
                 fetchedSources={fetchedSources}
                 eventCount={eventCount}
@@ -412,12 +655,15 @@ function App() {
           <section className="report-workspace" id="report-workspace" aria-labelledby="report-workspace-title">
             <div className="workspace-heading">
               <div><p className="eyebrow">OUTPUT WORKSPACE</p><h2 id="report-workspace-title">Report workspace</h2></div>
-              <span className="panel-index">{report ? `${sources.length} SOURCES` : 'WAITING'}</span>
+              <span className="panel-index">{report ? `${sources.length} SOURCES` : noResults ? 'NO RESULTS' : partialReport ? 'INCOMPLETE' : 'WAITING'}</span>
             </div>
-            {report ? (
+            {noResults && !report ? (
+              <ZeroResultsNotice topic={topic} onTryDifferentTopic={tryDifferentTopic} />
+            ) : report || partialReport ? (
               <>
-                <ReportView report={report} sources={sources} isStreaming={status === 'running'} />
-                {status === 'done' && runId && <PdfDownload runId={runId} />}
+                <ReportView report={report} sources={sources} isStreaming={status === 'running'} isPartial={partialReport} partialReason={partialReason} />
+                {status === 'done' && runId && !partialReport && <PdfDownload runId={runId} />}
+                {partialReport && <p className="pdf-unavailable" role="status">PDF export is unavailable until the report is complete. You can review the partial Markdown and citations above.</p>}
               </>
             ) : (
               <div className="workspace-empty"><span className="workspace-empty-number">02</span><div><strong>Your report will appear here</strong><p>Live Markdown, inline citations, source cards, and PDF export are all connected to the same run.</p></div></div>
@@ -432,6 +678,7 @@ function App() {
             status={status}
             stage={stage}
             sourceFetched={sourceCount}
+            sourceSucceeded={sourceSucceeded}
             sourceRetained={sources.length}
             eventCount={eventCount}
             elapsed={formatDuration(elapsedSeconds)}
@@ -442,7 +689,7 @@ function App() {
         </aside>
       </section>
 
-      <SourceIntelligence sources={sources} fetchedSources={fetchedSources} onOpenReport={() => navigateTo('reports')} />
+      <SourceIntelligence sources={sources} fetchedSources={fetchedSources} attemptedSources={sourceCount} succeededSources={sourceSucceeded} onOpenReport={() => navigateTo('reports')} />
 
       <footer className="platform-footer">
         <span>OMNIRUSH RESEARCH PLATFORM</span>

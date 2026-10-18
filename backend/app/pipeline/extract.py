@@ -13,6 +13,7 @@ import httpx
 import trafilatura
 from tavily import AsyncTavilyClient
 
+from app.mock.corpus import page_for_url
 from app.pipeline.search import SearchResult
 
 logger = logging.getLogger(__name__)
@@ -133,14 +134,17 @@ async def _fetch_one(
     mock_mode: bool,
     tavily_timeout_seconds: float,
     http_timeout_seconds: float,
-) -> Source | None:
+) -> tuple[Source | None, str | None]:
     """Extract one result, swallowing failures at the source boundary."""
 
     if mock_mode:
-        source = _source_from_content(result, result.content, method="mock")
+        page = page_for_url(result.url)
+        content = page.text if page is not None else result.content
+        source = _source_from_content(result, content, method="mock")
         if source is None:
             logger.warning("Skipping source with no fixture content: %s", result.url)
-        return source
+            return None, "fixture_content_empty"
+        return source, None
 
     if tavily_client is not None:
         try:
@@ -151,7 +155,7 @@ async def _fetch_one(
             content = _extract_tavily_text(payload)
             source = _source_from_content(result, content, method="tavily")
             if source is not None:
-                return source
+                return source, None
         except TimeoutError:
             logger.warning("Tavily extract timed out; trying HTTP fallback: %s", result.url)
         except Exception:
@@ -181,14 +185,14 @@ async def _fetch_one(
         )
         if source is None:
             raise ValueError("trafilatura returned empty text")
-        return source
+        return source, None
     except Exception as exc:
         logger.warning(
             "Skipping source after extraction failure (%s): %s",
             type(exc).__name__,
             result.url,
         )
-        return None
+        return None, f"{type(exc).__name__}: {exc}"[:240]
 
 
 async def fetch_sources(
@@ -199,6 +203,7 @@ async def fetch_sources(
     mock_mode: bool = False,
     tavily_timeout_seconds: float = 15.0,
     http_timeout_seconds: float = 10.0,
+    on_source_skipped: Any | None = None,
 ) -> list[Source]:
     """Fetch all sources concurrently and skip individual failures safely."""
 
@@ -207,7 +212,7 @@ async def fetch_sources(
     owns_http_client = http_client is None
     client = http_client or httpx.AsyncClient()
     try:
-        sources = await asyncio.gather(
+        outcomes = await asyncio.gather(
             *(
                 _fetch_one(
                     result,
@@ -223,4 +228,10 @@ async def fetch_sources(
     finally:
         if owns_http_client:
             await client.aclose()
-    return [source for source in sources if source is not None]
+    sources: list[Source] = []
+    for result, (source, reason) in zip(results, outcomes, strict=True):
+        if source is not None:
+            sources.append(source)
+        elif on_source_skipped is not None:
+            await on_source_skipped(result, reason or "source_unavailable")
+    return sources

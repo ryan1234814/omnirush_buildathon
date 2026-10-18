@@ -63,6 +63,21 @@ def test_report_pdf_requires_a_ready_report(monkeypatch, tmp_path) -> None:
     assert not (tmp_path / "pdf-not-ready.pdf").exists()
 
 
+def test_report_pdf_rejects_partial_report(monkeypatch, tmp_path) -> None:
+    snapshot = _snapshot("pdf-partial", "# Partial report")
+    snapshot.partial = True
+    app.state.event_bus = EventBus()
+    app.state.event_bus.restore(snapshot)
+    app.state.settings = Settings(runs_dir=str(tmp_path))
+    monkeypatch.setattr(reports, "render_pdf", lambda _report_md: pytest.fail("must not render"))
+
+    with TestClient(app) as client:
+        response = client.get("/api/reports/pdf-partial/report.pdf")
+
+    assert response.status_code == 409
+    assert response.json() == {"detail": "Partial reports cannot be exported"}
+
+
 def test_pdf_cache_rejects_unsafe_snapshot_ids(tmp_path) -> None:
     snapshot = _snapshot("../outside", "# Report")
 
