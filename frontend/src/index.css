@@ -1,7 +1,53 @@
 :root {
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  color: #edf1f7;
-  background: #080b10;
+  --font-display: 'Bangers', 'Impact', 'Haettenschweiler', 'Arial Narrow Bold', sans-serif;
+  --font-tape: 'Titan One', 'Impact', system-ui, sans-serif;
+  --font-body: 'Space Grotesk', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: 'Space Mono', ui-monospace, SFMono-Regular, Consolas, monospace;
+
+  /* Make-A-Ton style palette: warm paper + saturated section blocks + hard ink. */
+  --ink: #0C0E0F;
+  --paper: #FFF8EE;
+  --cream: #F2E3D0;
+  --yellow-hero: #FBC93E;
+  --yellow-tape: #FFE23A;
+  --gold: #FBD900;
+  --purple: #AD69FF;
+  --green: #22AC5F;
+  --yellow: #FCC230;
+  --red: #EF4225;
+  --blue: #4080FB;
+  --pink: #F57EB4;
+  --star-pink: #FA5C94;
+
+  /* Aliases retained so existing rules keep resolving. */
+  --bg: var(--paper);
+  --bg-elevated: var(--paper);
+  --bg-veil: var(--cream);
+  --bg-veil-hi: var(--yellow-tape);
+  --body: var(--ink);
+  --muted: rgba(12, 14, 15, 0.62);
+  --rule: rgba(12, 14, 15, 0.18);
+  --rule-strong: var(--ink);
+  --amber: var(--yellow-tape);
+  --amber-hi: var(--gold);
+  --plum: var(--purple);
+  --plum-hi: var(--pink);
+  --mint: var(--green);
+  --crimson: var(--red);
+
+  --line: 3px;
+  --shadow-hard: 6px 6px 0 var(--ink);
+  --shadow-hard-sm: 4px 4px 0 var(--ink);
+  --shadow-hard-lg: 10px 10px 0 var(--ink);
+  --radius-pill: 22px;
+  --radius-card: 18px;
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  font-family: var(--font-body);
+  color: var(--ink);
+  background: var(--paper);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -13,16 +59,33 @@
 
 html {
   min-width: 320px;
-  background: #080b10;
+  background: var(--paper);
 }
 
 body {
   min-width: 320px;
   min-height: 100vh;
   margin: 0;
+  color: var(--ink);
   background:
-    radial-gradient(circle at 78% 4%, rgb(32 62 42 / 20%), transparent 32rem),
-    #080b10;
+    radial-gradient(circle at 20% 20%, rgba(252, 194, 48, 0.14), transparent 40%),
+    radial-gradient(circle at 80% 60%, rgba(173, 105, 255, 0.10), transparent 45%),
+    radial-gradient(circle at 45% 90%, rgba(34, 172, 95, 0.08), transparent 40%),
+    var(--paper);
+  background-attachment: fixed;
+}
+
+/* Subtle paper polka-dot grain. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.55;
+  background-image: radial-gradient(rgba(12, 14, 15, 0.10) 1px, transparent 1px);
+  background-size: 18px 18px;
+  mix-blend-mode: multiply;
 }
 
 button,
@@ -32,9 +95,27 @@ input {
 
 button {
   cursor: pointer;
+  transition: transform 180ms var(--ease-spring), box-shadow 180ms var(--ease-spring), background 160ms ease, color 160ms ease, border-color 160ms ease;
 }
 
 ::selection {
-  color: #0a0d0f;
-  background: #a8f17d;
+  color: var(--paper);
+  background: var(--ink);
+}
+
+:focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
 }

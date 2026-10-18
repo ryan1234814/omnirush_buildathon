@@ -1488,3 +1488,1995 @@ h3 {
     display: grid;
   }
 }
+
+/* Full-page workspaces (Report workspace / Source intelligence). */
+.workspace-page {
+  display: grid;
+  gap: 16px;
+  width: 100%;
+  padding-top: 24px;
+}
+
+.workspace-page .source-intelligence-panel {
+  margin-top: 0;
+}
+
+.page-cross-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  padding-top: 4px;
+}
+
+/* ============================================================
+   SIGNATURE LOOK — editorial serif + amber/plum palette.
+   Targeted overrides that shift the app away from the generic
+   "dark + lime-green AI dashboard" template.
+   ============================================================ */
+
+.mission-control {
+  width: min(1240px, calc(100% - 48px));
+}
+
+.mission-control h1 {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 0.95;
+  color: var(--ink);
+  background: linear-gradient(180deg, #fbf3d9 0%, #d4c1a0 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.mission-control h2 {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+.mission-control .eyebrow {
+  color: var(--muted);
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 0.68rem;
+  letter-spacing: 0.32em;
+}
+
+.mission-control .eyebrow.accent {
+  color: var(--amber);
+}
+
+.mission-control .brand-mark {
+  border: 1px solid rgba(245, 185, 66, 0.55);
+  border-radius: 50%;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  position: relative;
+  isolation: isolate;
+  background: radial-gradient(circle at 30% 30%, rgba(245, 185, 66, 0.25), transparent 70%);
+}
+.mission-control .brand-mark::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, var(--amber), transparent 25%, var(--plum), transparent 60%, var(--amber));
+  z-index: -1;
+  filter: blur(7px);
+  opacity: 0.55;
+  animation: omnirush-spin 9s linear infinite;
+}
+
+.mission-control .brand-name {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 1.05rem;
+  color: var(--ink);
+}
+
+/* Status dot pulses instead of static glow. */
+.mission-control .status-dot {
+  background: var(--amber);
+  box-shadow: 0 0 14px var(--amber);
+  animation: omnirush-pulse 2.4s var(--ease-out-expo) infinite;
+}
+.mission-control .status-dot.offline {
+  background: var(--crimson);
+  box-shadow: 0 0 14px var(--crimson);
+  animation: none;
+}
+
+/* Amber CTAs replace lime-green fills. */
+.mission-control .input-row button,
+.mission-control .pdf-download {
+  border-color: var(--amber);
+  background: var(--amber);
+  color: #1a1104;
+  box-shadow: 0 10px 30px -12px rgba(245, 185, 66, 0.55);
+}
+.mission-control .input-row button:hover,
+.mission-control .pdf-download:hover {
+  background: var(--amber-hi);
+  transform: translateY(-1px);
+  box-shadow: 0 16px 36px -12px rgba(245, 185, 66, 0.65);
+}
+
+.mission-control input {
+  background: var(--bg-veil);
+  border-color: var(--rule-strong);
+  color: var(--ink);
+}
+.mission-control input:focus {
+  border-color: var(--amber);
+  box-shadow: 0 0 0 3px rgba(245, 185, 66, 0.18);
+}
+
+/* Editorial panels: hairline rules, warm inner glow, cursor-follow. */
+.mission-control .dashboard-panel,
+.mission-control .report-workspace,
+.mission-control .activity-panel,
+.mission-control .run-panel,
+.mission-control .report-panel,
+.mission-control .source-intelligence-panel {
+  border: 1px solid var(--rule);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 45%),
+    var(--bg-elevated);
+  position: relative;
+  isolation: isolate;
+  transition: border-color 320ms var(--ease-out-expo), box-shadow 420ms var(--ease-out-expo), transform 420ms var(--ease-out-expo);
+}
+.mission-control .dashboard-panel:hover,
+.mission-control .report-workspace:hover,
+.mission-control .source-intelligence-panel:hover {
+  border-color: var(--rule-strong);
+  box-shadow: 0 40px 80px -50px rgba(245, 185, 66, 0.35);
+}
+.mission-control .dashboard-panel::after,
+.mission-control .report-workspace::after,
+.mission-control .source-intelligence-panel::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  z-index: -1;
+  background: radial-gradient(320px circle at var(--mx, 50%) var(--my, 50%), rgba(245, 185, 66, 0.12), transparent 65%);
+  transition: opacity 320ms ease;
+}
+.mission-control .dashboard-panel:hover::after,
+.mission-control .report-workspace:hover::after,
+.mission-control .source-intelligence-panel:hover::after {
+  opacity: 1;
+}
+
+/* Ambient orbs behind the command deck. */
+.mission-control .command-deck {
+  position: relative;
+  isolation: isolate;
+}
+.mission-control .command-deck::before,
+.mission-control .command-deck::after {
+  content: '';
+  position: absolute;
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(70px);
+  opacity: 0.42;
+  z-index: -1;
+  animation: omnirush-drift 16s ease-in-out infinite alternate;
+}
+.mission-control .command-deck::before {
+  background: var(--amber);
+  top: -20px;
+  left: -60px;
+}
+.mission-control .command-deck::after {
+  background: var(--plum);
+  bottom: -40px;
+  right: -60px;
+  animation-delay: -8s;
+}
+
+/* Nav pills: gradient underline sweep instead of a hard active box. */
+.mission-control .workspace-nav-item {
+  position: relative;
+  color: var(--muted);
+  background: transparent;
+  border: 0;
+}
+.mission-control .workspace-nav-item::after {
+  content: '';
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 6px;
+  height: 2px;
+  background: linear-gradient(90deg, var(--amber), var(--plum));
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 480ms var(--ease-out-expo);
+}
+.mission-control .workspace-nav-item.active,
+.mission-control .workspace-nav-item:hover {
+  color: var(--ink);
+}
+.mission-control .workspace-nav-item.active::after,
+.mission-control .workspace-nav-item:hover::after {
+  transform: scaleX(1);
+}
+
+/* Timeline: shimmer sweep on active stage, mint on complete. */
+.mission-control .timeline-step {
+  position: relative;
+  overflow: hidden;
+  border-top-color: var(--rule-strong);
+  color: var(--muted);
+}
+.mission-control .timeline-step.active {
+  color: var(--amber);
+  border-top-color: var(--amber);
+}
+.mission-control .timeline-step.active::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, transparent 30%, rgba(245, 185, 66, 0.22) 50%, transparent 70%);
+  animation: omnirush-shimmer 2.4s var(--ease-out-expo) infinite;
+  pointer-events: none;
+}
+.mission-control .timeline-step.complete {
+  color: var(--body);
+  border-top-color: var(--mint);
+}
+
+/* Citations: plum pill instead of green box. */
+.mission-control .citation a,
+.mission-control .citation button {
+  border-color: rgba(217, 70, 239, 0.45);
+  color: var(--plum-hi);
+  background: rgba(217, 70, 239, 0.10);
+  border-radius: 999px;
+  padding: 1px 8px;
+  transition: background 220ms ease, color 220ms ease, transform 220ms var(--ease-spring), border-color 220ms ease;
+}
+.mission-control .citation a:hover,
+.mission-control .citation button:hover {
+  background: var(--plum);
+  color: #1a0518;
+  border-color: var(--plum);
+  transform: translateY(-1px) scale(1.05);
+}
+
+/* Status glyph ring pulses softly. */
+.mission-control .status-glyph {
+  border-color: rgba(245, 185, 66, 0.45);
+  color: var(--amber);
+  box-shadow: 0 0 24px rgba(245, 185, 66, 0.22);
+}
+.mission-control .status-glyph.success {
+  border-color: rgba(74, 222, 128, 0.55);
+  color: var(--mint);
+  background: rgba(74, 222, 128, 0.10);
+  box-shadow: 0 0 24px rgba(74, 222, 128, 0.25);
+  animation: omnirush-pulse 1.6s var(--ease-out-expo) 2;
+}
+.mission-control .status-glyph.failure {
+  border-color: rgba(255, 107, 107, 0.55);
+  color: var(--crimson);
+  background: rgba(255, 107, 107, 0.10);
+  box-shadow: 0 0 24px rgba(255, 107, 107, 0.20);
+}
+
+/* Source intel rows lift on hover. */
+.mission-control .intel-source-row:hover {
+  border-color: var(--amber);
+  background: linear-gradient(180deg, rgba(245, 185, 66, 0.06), transparent);
+  transform: translateX(3px);
+}
+
+/* Report body: better reading rhythm. */
+.mission-control .report-body {
+  color: var(--body);
+  font-family: var(--font-body);
+  line-height: 1.75;
+}
+.mission-control .report-body h1,
+.mission-control .report-body h2,
+.mission-control .report-body h3 {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+
+/* Buttons and chips: warm amber focus, spring press. */
+.mission-control .examples button {
+  border-color: var(--rule-strong);
+  color: var(--body);
+  background: transparent;
+}
+.mission-control .examples button:hover:not(:disabled) {
+  border-color: var(--amber);
+  color: var(--amber);
+  background: rgba(245, 185, 66, 0.06);
+  transform: translateY(-1px);
+}
+.mission-control .text-button {
+  color: var(--amber);
+  border-bottom-color: rgba(245, 185, 66, 0.35);
+}
+.mission-control .text-button:hover {
+  color: var(--amber-hi);
+  border-bottom-color: var(--amber-hi);
+}
+
+@keyframes omnirush-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.55; transform: scale(1.15); }
+}
+@keyframes omnirush-shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+@keyframes omnirush-drift {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(30px, -20px) scale(1.15); }
+}
+@keyframes omnirush-spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes omnirush-ink-reveal {
+  from { opacity: 0; transform: translateY(8px); filter: blur(6px); }
+  to { opacity: 1; transform: translateY(0); filter: blur(0); }
+}
+@keyframes omnirush-flow {
+  to { stroke-dashoffset: -200; }
+}
+@keyframes omnirush-node-pop {
+  0% { transform: scale(0.6); opacity: 0; }
+  60% { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.ink-word {
+  display: inline-block;
+  opacity: 0;
+  animation: omnirush-ink-reveal 900ms var(--ease-out-expo) forwards;
+}
+.ink-word:nth-child(1) { animation-delay: 0ms; }
+.ink-word:nth-child(2) { animation-delay: 90ms; }
+.ink-word:nth-child(3) { animation-delay: 180ms; }
+.ink-word:nth-child(4) { animation-delay: 270ms; }
+.ink-word:nth-child(5) { animation-delay: 360ms; }
+.ink-word:nth-child(6) { animation-delay: 450ms; }
+.ink-word:nth-child(7) { animation-delay: 540ms; }
+.ink-word:nth-child(8) { animation-delay: 630ms; }
+
+/* ============================================================
+   PIPELINE FLOW (animated SVG in the live-run deck).
+   ============================================================ */
+.pipeline-flow {
+  margin: 24px 0 4px;
+  padding: 8px 0 4px;
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+  background:
+    radial-gradient(600px 60px at 50% 50%, rgba(245, 185, 66, 0.06), transparent 70%);
+}
+.pipeline-flow svg { overflow: visible; display: block; }
+.pipeline-flow-ants { animation: omnirush-flow 3.5s linear infinite; }
+.pipeline-node text { font-family: var(--font-mono); fill: var(--muted); }
+.pipeline-node .pipeline-label { fill: var(--muted); letter-spacing: 0.14em; text-transform: uppercase; font-size: 0.62rem; }
+.pipeline-node .pipeline-dot { fill: #10192a; stroke: var(--rule-strong); stroke-width: 1.4; transition: fill 320ms var(--ease-out-expo), stroke 320ms var(--ease-out-expo); }
+.pipeline-node-pending .pipeline-dot { opacity: 0.55; }
+.pipeline-node-complete .pipeline-dot { fill: var(--mint); stroke: var(--mint); filter: drop-shadow(0 0 8px rgba(74, 222, 128, 0.35)); }
+.pipeline-node-complete .pipeline-label { fill: var(--body); }
+.pipeline-node-active .pipeline-dot { fill: var(--amber); stroke: var(--amber-hi); animation: omnirush-node-pop 700ms var(--ease-spring); }
+.pipeline-node-active .pipeline-index { fill: #1a1104; font-weight: 700; }
+.pipeline-node-active .pipeline-label { fill: var(--amber); }
+.pipeline-halo { animation: omnirush-pulse 2.2s var(--ease-out-expo) infinite; transform-origin: center; transform-box: fill-box; }
+
+/* ============================================================
+   COMMAND PALETTE (⌘K).
+   ============================================================ */
+.command-palette-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(3, 6, 12, 0.65);
+  backdrop-filter: blur(10px) saturate(140%);
+  animation: omnirush-palette-fade 220ms var(--ease-out-expo);
+}
+.command-palette {
+  width: min(560px, 100%);
+  border: 1px solid var(--rule-strong);
+  border-radius: 14px;
+  background: linear-gradient(180deg, #0f172a, #0b1120);
+  box-shadow: 0 40px 90px -30px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(245, 185, 66, 0.06);
+  padding: 14px;
+  display: grid;
+  gap: 10px;
+  animation: omnirush-palette-rise 320ms var(--ease-out-expo);
+}
+.command-palette-input {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  background: #0a1120;
+  color: var(--ink);
+  font-size: 0.95rem;
+}
+.command-palette-input:focus { border-color: var(--amber); box-shadow: 0 0 0 3px rgba(245, 185, 66, 0.16); }
+.command-palette-list {
+  max-height: 340px;
+  overflow-y: auto;
+  display: grid;
+  gap: 8px;
+}
+.command-palette-section-label {
+  margin: 12px 6px 4px;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+.command-palette-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--body);
+  text-align: left;
+  font-size: 0.9rem;
+  transition: background 160ms ease, border-color 160ms ease, color 160ms ease, transform 200ms var(--ease-spring);
+}
+.command-palette-row:hover,
+.command-palette-row.active {
+  background: linear-gradient(90deg, rgba(245, 185, 66, 0.14), rgba(217, 70, 239, 0.06));
+  border-color: rgba(245, 185, 66, 0.35);
+  color: var(--ink);
+  transform: translateX(2px);
+}
+.command-palette-row-hint {
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+}
+.command-palette-empty {
+  padding: 20px 12px;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.command-palette-footer {
+  display: flex;
+  gap: 14px;
+  padding: 6px 8px 2px;
+  color: var(--muted);
+  font-size: 0.7rem;
+}
+.command-palette-footer kbd {
+  margin-right: 4px;
+  padding: 2px 6px;
+  border: 1px solid var(--rule-strong);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--body);
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+}
+@keyframes omnirush-palette-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes omnirush-palette-rise {
+  from { opacity: 0; transform: translateY(10px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ============================================================
+   CITATION HEATMAP.
+   ============================================================ */
+.citation-heatmap {
+  padding: 22px;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  background: var(--bg-elevated);
+  position: relative;
+  isolation: isolate;
+}
+.citation-heatmap::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  z-index: -1;
+  background: radial-gradient(320px circle at var(--mx, 50%) var(--my, 50%), rgba(217, 70, 239, 0.12), transparent 65%);
+  transition: opacity 320ms ease;
+}
+.citation-heatmap:hover::after { opacity: 1; }
+.heatmap-heading { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; }
+.heatmap-heading h3 {
+  margin: 6px 0 12px;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  color: var(--ink);
+  font-size: 1.25rem;
+}
+.heatmap-grid { display: grid; gap: 4px; margin-top: 8px; }
+.heatmap-row {
+  display: grid;
+  grid-template-columns: minmax(160px, 220px) repeat(var(--heatmap-cols, 6), minmax(32px, 1fr));
+  gap: 4px;
+  align-items: center;
+}
+.heatmap-row-head { padding-bottom: 4px; }
+.heatmap-corner { grid-column: 1 / 2; }
+.heatmap-col-label {
+  justify-self: center;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+}
+.heatmap-row-label {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding-right: 10px;
+  color: var(--body);
+  font-size: 0.82rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.heatmap-row-label em {
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-style: normal;
+}
+.heatmap-cell {
+  --intensity: 0;
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border: 1px solid rgba(245, 236, 215, 0.06);
+  border-radius: 4px;
+  background:
+    linear-gradient(135deg,
+      rgba(245, 185, 66, calc(var(--intensity) * 0.85)) 0%,
+      rgba(217, 70, 239, calc(var(--intensity) * 0.85)) 100%);
+  padding: 0;
+  color: #1a1104;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  transition: transform 200ms var(--ease-spring), border-color 200ms ease, box-shadow 200ms ease;
+}
+.heatmap-cell.empty { background: rgba(255, 255, 255, 0.02); color: transparent; }
+.heatmap-cell:hover,
+.heatmap-cell.hovered {
+  border-color: var(--amber);
+  transform: scale(1.08);
+  box-shadow: 0 0 20px rgba(245, 185, 66, 0.35);
+}
+.heatmap-cell-count { display: grid; place-items: center; width: 100%; height: 100%; }
+.heatmap-hover {
+  margin: 12px 0 0;
+  padding: 8px 12px;
+  border-left: 2px solid var(--plum);
+  color: var(--body);
+  font-size: 0.78rem;
+  background: rgba(217, 70, 239, 0.06);
+}
+.heatmap-hover strong { color: var(--ink); }
+.heatmap-hover-count { margin-left: 10px; color: var(--plum-hi); font-family: var(--font-mono); font-size: 0.7rem; }
+
+/* ============================================================
+   VOICE INPUT.
+   ============================================================ */
+.mission-control .voice-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 14px;
+  border: 1px solid var(--rule-strong);
+  border-radius: 5px;
+  background: var(--bg-veil);
+  color: var(--body);
+}
+.mission-control .voice-toggle:hover:not(:disabled) {
+  border-color: var(--amber);
+  color: var(--amber);
+  background: rgba(245, 185, 66, 0.06);
+}
+.mission-control .voice-toggle:disabled { opacity: 0.4; cursor: not-allowed; }
+.mission-control .voice-toggle.listening {
+  border-color: var(--plum);
+  color: var(--plum-hi);
+  background: rgba(217, 70, 239, 0.10);
+  box-shadow: 0 0 20px rgba(217, 70, 239, 0.35);
+}
+.mission-control .voice-wave {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 14px;
+}
+.mission-control .voice-wave i {
+  display: inline-block;
+  width: 2px;
+  height: 4px;
+  background: currentColor;
+  border-radius: 1px;
+}
+.mission-control .voice-toggle.listening .voice-wave i {
+  animation: omnirush-wave 900ms var(--ease-out-expo) infinite;
+}
+.mission-control .voice-toggle.listening .voice-wave i:nth-child(2) { animation-delay: 150ms; }
+.mission-control .voice-toggle.listening .voice-wave i:nth-child(3) { animation-delay: 300ms; }
+.mission-control input[data-listening] {
+  border-color: var(--plum);
+  box-shadow: 0 0 0 3px rgba(217, 70, 239, 0.18);
+}
+.voice-error {
+  margin: 8px 0 0;
+  color: var(--crimson);
+  font-size: 0.75rem;
+}
+@keyframes omnirush-wave {
+  0%, 100% { height: 4px; }
+  50% { height: 14px; }
+}
+
+/* ============================================================
+   HEADER BUTTONS (⌘K hint + sound toggle).
+   ============================================================ */
+.mission-control .palette-hint,
+.mission-control .sound-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 30px;
+  padding: 0 10px;
+  border: 1px solid var(--rule-strong);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.05em;
+}
+.mission-control .palette-hint kbd {
+  padding: 1px 5px;
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--body);
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+}
+.mission-control .palette-hint:hover,
+.mission-control .sound-toggle:hover {
+  border-color: var(--amber);
+  color: var(--amber);
+}
+.mission-control .sound-toggle.active {
+  border-color: rgba(245, 185, 66, 0.6);
+  color: var(--amber);
+  background: rgba(245, 185, 66, 0.08);
+}
+.mission-control .header-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ==========================================================================
+   MAKE-A-TON STICKER PACK — supersedes everything above.
+   Warm paper + thick ink outlines + hard offset shadows + Bangers/Titan One.
+   ========================================================================== */
+
+/* Layout shell: give the whole app a scrapbook margin breathing room. */
+.mission-control {
+  max-width: 1280px !important;
+  padding: 24px clamp(16px, 4vw, 44px) 120px !important;
+  color: var(--ink) !important;
+}
+
+/* Full-bleed colored section bands sit behind the shell via ::before on containers. */
+.mission-control *,
+.mission-control *::before,
+.mission-control *::after {
+  border-color: var(--ink) !important;
+}
+
+/* -------- Topbar: floating dark rounded pill nav (makeaton .site-nav) -------- */
+.mission-control .workspace-header {
+  position: sticky !important;
+  top: 16px !important;
+  z-index: 20;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 18px;
+  padding: 12px 20px !important;
+  margin: 0 0 32px !important;
+  width: 100% !important;
+  background: var(--ink) !important;
+  color: var(--paper) !important;
+  border: 3px solid var(--ink) !important;
+  border-radius: 999px !important;
+  box-shadow: 0 6px 0 rgba(12, 14, 15, 0.28), 6px 6px 0 rgba(12, 14, 15, 0.35) !important;
+  backdrop-filter: none !important;
+}
+
+.mission-control .workspace-header .brand-lockup {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.mission-control .workspace-header .brand-mark {
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 999px !important;
+  background: var(--yellow-tape) !important;
+  border: 3px solid var(--ink) !important;
+  color: var(--ink) !important;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-display) !important;
+  font-size: 1.4rem !important;
+  line-height: 1;
+  box-shadow: 3px 3px 0 var(--paper) !important;
+}
+
+.mission-control .workspace-header .brand-mark::after {
+  /* Kill the previous spinning conic halo. */
+  display: none !important;
+}
+
+.mission-control .workspace-header .brand-name {
+  font-family: var(--font-tape) !important;
+  font-size: 1.15rem !important;
+  letter-spacing: 0.06em !important;
+  text-transform: uppercase !important;
+  color: var(--paper) !important;
+  text-shadow: 2px 2px 0 var(--ink);
+}
+
+.mission-control .workspace-header .eyebrow,
+.mission-control .workspace-header .eyebrow.accent {
+  font-family: var(--font-body) !important;
+  font-size: 0.62rem !important;
+  letter-spacing: 0.24em !important;
+  text-transform: uppercase !important;
+  color: rgba(255, 248, 238, 0.6) !important;
+  margin: 0 !important;
+}
+
+.mission-control .workspace-header nav,
+.mission-control .workspace-header .view-tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.mission-control .workspace-header .view-tab,
+.mission-control .workspace-header .nav-link,
+.mission-control .workspace-header .workspace-nav-item {
+  font-family: var(--font-tape) !important;
+  font-size: 0.78rem !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+  padding: 8px 14px !important;
+  border-radius: 999px !important;
+  border: 2px solid transparent !important;
+  background: transparent !important;
+  color: var(--paper) !important;
+}
+
+.mission-control .workspace-header .view-tab:hover,
+.mission-control .workspace-header .nav-link:hover,
+.mission-control .workspace-header .workspace-nav-item:hover {
+  background: rgba(255, 226, 58, 0.16) !important;
+  border-color: var(--yellow-tape) !important;
+  color: var(--yellow-tape) !important;
+  transform: translateY(-1px);
+}
+
+.mission-control .workspace-header .view-tab.active,
+.mission-control .workspace-header .nav-link.active,
+.mission-control .workspace-header .workspace-nav-item.active {
+  background: var(--yellow-tape) !important;
+  color: var(--ink) !important;
+  border-color: var(--ink) !important;
+  box-shadow: 3px 3px 0 var(--ink) !important;
+  transform: translate(-1px, -1px);
+}
+
+.mission-control .workspace-header .header-actions {
+  gap: 10px !important;
+}
+
+.mission-control .palette-hint,
+.mission-control .sound-toggle,
+.mission-control .projector-toggle {
+  background: transparent !important;
+  border: 2px solid rgba(255, 248, 238, 0.35) !important;
+  color: var(--paper) !important;
+  border-radius: 999px !important;
+  padding: 6px 12px !important;
+  font-family: var(--font-tape) !important;
+  font-size: 0.68rem !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+}
+
+.mission-control .palette-hint:hover,
+.mission-control .sound-toggle:hover,
+.mission-control .projector-toggle:hover {
+  background: var(--yellow-tape) !important;
+  color: var(--ink) !important;
+  border-color: var(--ink) !important;
+  box-shadow: 3px 3px 0 rgba(12, 14, 15, 0.9) !important;
+}
+
+.mission-control .palette-hint.active,
+.mission-control .sound-toggle.active,
+.mission-control .projector-toggle.active {
+  background: var(--pink) !important;
+  color: var(--ink) !important;
+  border-color: var(--ink) !important;
+}
+
+.mission-control .palette-hint kbd {
+  background: rgba(255, 248, 238, 0.12) !important;
+  color: var(--paper) !important;
+  border: 1px solid rgba(255, 248, 238, 0.3) !important;
+  border-radius: 4px !important;
+  padding: 1px 5px !important;
+  font-family: var(--font-mono) !important;
+  font-size: 0.6rem !important;
+}
+
+/* Status pill inside header */
+.mission-control .workspace-header .connection-status {
+  color: rgba(255, 248, 238, 0.75) !important;
+  font-family: var(--font-body) !important;
+  font-size: 0.7rem !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+}
+
+/* -------- Command deck = hero yellow panel with sunburst rays -------- */
+.mission-control .command-deck {
+  position: relative !important;
+  background: var(--yellow-hero) !important;
+  color: var(--ink) !important;
+  border: 3px solid var(--ink) !important;
+  border-radius: var(--radius-card) !important;
+  padding: clamp(28px, 5vw, 60px) clamp(22px, 4vw, 48px) !important;
+  margin-bottom: 40px !important;
+  box-shadow: var(--shadow-hard) !important;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+/* Sunburst rays behind the hero */
+.mission-control .command-deck::before {
+  content: '' !important;
+  position: absolute;
+  inset: -20%;
+  z-index: -1;
+  background: repeating-conic-gradient(
+    from 0deg,
+    rgba(239, 66, 37, 0.18) 0deg 6deg,
+    transparent 6deg 20deg
+  );
+  animation: omnirush-spin 60s linear infinite;
+  opacity: 0.9;
+}
+
+/* Dashed inner border like makeaton's torn inner rule */
+.mission-control .command-deck::after {
+  content: '' !important;
+  position: absolute;
+  inset: 14px;
+  z-index: -1;
+  border: 2px dashed rgba(12, 14, 15, 0.28);
+  border-radius: 12px;
+  pointer-events: none;
+}
+
+.mission-control .command-deck .eyebrow,
+.mission-control .command-deck .eyebrow.accent {
+  font-family: var(--font-tape) !important;
+  font-size: 0.72rem !important;
+  letter-spacing: 0.14em !important;
+  text-transform: uppercase !important;
+  color: var(--ink) !important;
+  background: var(--paper);
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 2px solid var(--ink);
+  display: inline-block;
+  margin: 0 0 18px !important;
+  box-shadow: 3px 3px 0 var(--ink);
+}
+
+.mission-control h1 {
+  font-family: var(--font-display) !important;
+  font-weight: 400 !important;
+  font-style: normal !important;
+  font-size: clamp(2.6rem, 7vw, 5.4rem) !important;
+  line-height: 0.98 !important;
+  letter-spacing: 0.02em !important;
+  text-transform: uppercase !important;
+  color: var(--ink) !important;
+  -webkit-background-clip: initial !important;
+  background-clip: initial !important;
+  background: none !important;
+  -webkit-text-fill-color: initial !important;
+  text-shadow: 3px 3px 0 var(--paper), 6px 6px 0 var(--ink) !important;
+  margin: 0 0 20px !important;
+}
+
+.mission-control .command-copy p,
+.mission-control .hero-copy p {
+  font-family: var(--font-body) !important;
+  font-size: 1.02rem !important;
+  line-height: 1.6 !important;
+  color: rgba(12, 14, 15, 0.78) !important;
+  max-width: 62ch;
+  margin: 0 0 20px !important;
+}
+
+/* Staggered word reveal becomes a comic "sticker pop". */
+.mission-control .ink-word {
+  display: inline-block;
+  animation: omnirush-sticker-pop 520ms var(--ease-spring) both;
+  opacity: 1 !important;
+  filter: none !important;
+  transform: none !important;
+}
+
+@keyframes omnirush-sticker-pop {
+  0% { opacity: 0; transform: translateY(14px) rotate(-4deg) scale(0.9); }
+  60% { opacity: 1; transform: translateY(-2px) rotate(1deg) scale(1.03); }
+  100% { opacity: 1; transform: translateY(0) rotate(0) scale(1); }
+}
+  
+/* -------- Topic form: paper sticker card with hard-shadow inputs -------- */
+.mission-control .topic-form-wrap {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+.mission-control .topic-form {
+  background: var(--paper) !important;
+  border: 3px solid var(--ink) !important;
+  border-radius: var(--radius-card) !important;
+  padding: 22px !important;
+  box-shadow: var(--shadow-hard) !important;
+}
+
+.mission-control .topic-form label,
+.mission-control .topic-form-wrap label {
+  font-family: var(--font-tape) !important;
+  font-size: 0.78rem !important;
+  letter-spacing: 0.1em !important;
+  text-transform: uppercase !important;
+  color: var(--ink) !important;
+  margin-bottom: 10px !important;
+}
+
+.mission-control .input-row {
+  display: flex !important;
+  gap: 10px !important;
+  flex-wrap: wrap !important;
+}
+
+.mission-control .input-row input,
+.mission-control .input-row input[type='text'],
+.mission-control .input-row input:not([type]) {
+  flex: 1 1 240px;
+  padding: 14px 16px !important;
+  background: var(--paper) !important;
+  color: var(--ink) !important;
+  border: 3px solid var(--ink) !important;
+  border-radius: 12px !important;
+  box-shadow: 4px 4px 0 var(--ink) !important;
+  font-family: var(--font-body) !important;
+  font-size: 1rem !important;
+  transition: transform 160ms var(--ease-spring), box-shadow 160ms var(--ease-spring);
+}
+
+.mission-control .input-row input:focus {
+  outline: none !important;
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 var(--ink) !important;
+  background: var(--yellow-tape) !important;
+}
+
+.mission-control .input-row input::placeholder {
+  color: rgba(12, 14, 15, 0.5) !important;
+}
+
+/* CTA buttons: tape-yellow pills with hard 4px offset shadow. */
+.mission-control .input-row button[type='submit'],
+.mission-control .pdf-download,
+.mission-control .secondary-action {
+  padding: 14px 22px !important;
+  background: var(--yellow-tape) !important;
+  color: var(--ink) !important;
+  border: 3px solid var(--ink) !important;
+  border-radius: 999px !important;
+  box-shadow: 4px 4px 0 var(--ink) !important;
+  font-family: var(--font-tape) !important;
+  font-size: 0.82rem !important;
+  letter-spacing: 0.1em !important;
+  text-transform: uppercase !important;
+  line-height: 1 !important;
+}
+
+.mission-control .input-row button[type='submit']:hover:not(:disabled),
+.mission-control .pdf-download:hover:not(:disabled),
+.mission-control .secondary-action:hover {
+  transform: translate(-2px, -2px) !important;
+  box-shadow: 6px 6px 0 var(--ink) !important;
+  background: var(--gold) !important;
+}
+
+.mission-control .input-row button[type='submit']:active:not(:disabled),
+.mission-control .pdf-download:active:not(:disabled) {
+  transform: translate(2px, 2px) !important;
+  box-shadow: 2px 2px 0 var(--ink) !important;
+}
+
+.mission-control .input-row button:disabled,
+.mission-control .pdf-download:disabled {
+  background: var(--cream) !important;
+  color: rgba(12, 14, 15, 0.5) !important;
+  box-shadow: 4px 4px 0 rgba(12, 14, 15, 0.35) !important;
+  border-color: rgba(12, 14, 15, 0.5) !important;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.mission-control .input-row button span {
+  color: inherit !important;
+}
+
+/* Example chips: mini sticker tags */
+.mission-control .examples {
+  gap: 8px !important;
+  margin-top: 14px !important;
+}
+
+.mission-control .examples button {
+  padding: 8px 14px !important;
+  background: var(--paper) !important;
+  color: var(--ink) !important;
+  border: 2px solid var(--ink) !important;
+  border-radius: 999px !important;
+  box-shadow: 3px 3px 0 var(--ink) !important;
+  font-family: var(--font-body) !important;
+  font-size: 0.78rem !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.02em !important;
+  text-transform: none !important;
+}
+
+.mission-control .examples button:hover:not(:disabled) {
+  background: var(--pink) !important;
+  transform: translate(-2px, -2px) !important;
+  box-shadow: 5px 5px 0 var(--ink) !important;
+}
+
+/* Voice mic: pink sticker pill */
+.mission-control .voice-toggle {
+  padding: 0 16px !important;
+  background: var(--paper) !important;
+  color: var(--ink) !important;
+  border: 3px solid var(--ink) !important;
+  border-radius: 12px !important;
+  box-shadow: 4px 4px 0 var(--ink) !important;
+  min-width: 52px !important;
+}
+
+.mission-control .voice-toggle:hover {
+  background: var(--yellow-tape) !important;
+  transform: translate(-2px, -2px) !important;
+  box-shadow: 6px 6px 0 var(--ink) !important;
+}
+
+.mission-control .voice-toggle.listening {
+  background: var(--red) !important;
+  color: var(--paper) !important;
+  animation: omnirush-wiggle 900ms ease-in-out infinite;
+}
+
+@keyframes omnirush-wiggle {
+  0%, 100% { transform: rotate(-1deg) translate(-1px, -1px); }
+  50% { transform: rotate(1deg) translate(1px, 1px); }
+}
+
+.mission-control .voice-error {
+  color: var(--red) !important;
+  font-family: var(--font-body) !important;
+  font-size: 0.82rem !important;
+  margin-top: 8px !important;
+}
+
+/* -------- Panels: every .dashboard-panel + report workspace is a paper sticker card -------- */
+.mission-control .dashboard-panel,
+.mission-control .report-workspace,
+.mission-control .report-panel,
+.mission-control .run-panel,
+.mission-control .activity-panel,
+.mission-control .citation-heatmap,
+.mission-control .pipeline-flow,
+.mission-control .source-intelligence-panel,
+.mission-control .latency-budget-panel,
+.mission-control .run-notice,
+.mission-control .run-error {
+  background: var(--paper) !important;
+  border: 3px solid var(--ink) !important;
+  border-radius: var(--radius-card) !important;
+  box-shadow: var(--shadow-hard) !important;
+  padding: 22px !important;
+  color: var(--ink) !important;
+  transition: transform 200ms var(--ease-spring), box-shadow 200ms var(--ease-spring);
+}
+
+.mission-control .dashboard-panel:hover,
+.mission-control .report-workspace:hover,
+.mission-control .citation-heatmap:hover,
+.mission-control .activity-panel:hover,
+.mission-control .pipeline-flow:hover {
+  transform: translate(-3px, -3px);
+  box-shadow: 9px 9px 0 var(--ink) !important;
+}
+
+/* Kill the old amber cursor-follow glow and the blur orbs on top of the sticker look. */
+.mission-control .dashboard-panel::after,
+.mission-control .report-workspace::after,
+.mission-control .source-intelligence-panel::after,
+.mission-control .citation-heatmap::after,
+.mission-control .command-deck > *::before {
+  display: none !important;
+  background: none !important;
+}
+
+/* Panel headings use Bangers/Titan One. */
+.mission-control .panel-heading,
+.mission-control .section-heading,
+.mission-control .topbar,
+.mission-control .run-panel-heading,
+.mission-control .source-heading,
+.mission-control .sources-heading,
+.mission-control .report-panel h2,
+.mission-control .run-panel h2,
+.mission-control .dashboard-panel h2,
+.mission-control .dashboard-panel h3,
+.mission-control .citation-heatmap h2,
+.mission-control .citation-heatmap h3,
+.mission-control .activity-panel h2,
+.mission-control .activity-panel h3 {
+  font-family: var(--font-tape) !important;
+  font-weight: 400 !important;
+  letter-spacing: 0.06em !important;
+  text-transform: uppercase !important;
+  color: var(--ink) !important;
+}
+
+.mission-control .dashboard-panel h2,
+.mission-control .panel-heading h2,
+.mission-control .panel-heading h3,
+.mission-control .report-panel h2,
+.mission-control .run-panel h2,
+.mission-control .citation-heatmap .heatmap-heading {
+  font-family: var(--font-display) !important;
+  font-size: 1.9rem !important;
+  letter-spacing: 0.02em !important;
+  color: var(--ink) !important;
+  text-shadow: 2px 2px 0 var(--yellow-tape) !important;
+  margin: 0 0 12px !important;
+}
+
+.mission-control .panel-index {
+  font-family: var(--font-display) !important;
+  color: var(--ink) !important;
+  background: var(--yellow-tape) !important;
+  border: 2px solid var(--ink) !important;
+  border-radius: 999px !important;
+  padding: 2px 12px !important;
+  font-size: 1rem !important;
+  box-shadow: 3px 3px 0 var(--ink) !important;
+  line-height: 1.4 !important;
+}
+
+.mission-control .panel-note,
+.mission-control .eyebrow,
+.mission-control .eyebrow.accent {
+  font-family: var(--font-body) !important;
+  font-size: 0.7rem !important;
+  letter-spacing: 0.22em !important;
+  text-transform: uppercase !important;
+  color: rgba(12, 14, 15, 0.62) !important;
+}
+
+.mission-control .connection-status,
+.mission-control .phase-label,
+.mission-control .progress-meta,
+.mission-control .connection-note {
+  font-family: var(--font-mono) !important;
+  font-size: 0.72rem !important;
+  color: rgba(12, 14, 15, 0.7) !important;
+  letter-spacing: 0.06em !important;
+  text-transform: uppercase !important;
+}
+
+/* Status dot: chunky comic dot with pulse ring */
+.mission-control .status-dot {
+  width: 14px !important;
+  height: 14px !important;
+  background: var(--green) !important;
+  border: 3px solid var(--ink) !important;
+  border-radius: 999px !important;
+  box-shadow: 0 0 0 0 rgba(34, 172, 95, 0.7) !important;
+  animation: omnirush-sticker-pulse 1.6s infinite !important;
+}
+
+.mission-control .status-dot.offline {
+  background: var(--red) !important;
+  animation-name: omnirush-sticker-pulse-red !important;
+}
+
+@keyframes omnirush-sticker-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(34, 172, 95, 0.65), 3px 3px 0 var(--ink); }
+  70% { box-shadow: 0 0 0 12px rgba(34, 172, 95, 0), 3px 3px 0 var(--ink); }
+  100% { box-shadow: 0 0 0 0 rgba(34, 172, 95, 0), 3px 3px 0 var(--ink); }
+}
+@keyframes omnirush-sticker-pulse-red {
+  0% { box-shadow: 0 0 0 0 rgba(239, 66, 37, 0.65), 3px 3px 0 var(--ink); }
+  70% { box-shadow: 0 0 0 12px rgba(239, 66, 37, 0), 3px 3px 0 var(--ink); }
+  100% { box-shadow: 0 0 0 0 rgba(239, 66, 37, 0), 3px 3px 0 var(--ink); }
+}
+
+/* Status glyph chips */
+.mission-control .status-glyph,
+.mission-control .notice-glyph,
+.mission-control .latency-budget-icon,
+.mission-control .source-fetch-glyph,
+.mission-control .capability-arrow,
+.mission-control .history-arrow,
+.mission-control .intel-source-arrow {
+  background: var(--yellow-tape) !important;
+  color: var(--ink) !important;
+  border: 3px solid var(--ink) !important;
+  border-radius: 999px !important;
+  box-shadow: 3px 3px 0 var(--ink) !important;
+  font-family: var(--font-display) !important;
+  font-size: 1.1rem !important;
+  width: 34px !important;
+  height: 34px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  line-height: 1 !important;
+  text-align: center !important;
+}
+
+.mission-control .status-glyph.success { background: var(--green) !important; color: var(--paper) !important; }
+.mission-control .status-glyph.failure { background: var(--red) !important; color: var(--paper) !important; }
+.mission-control .failure-notice .notice-glyph { background: var(--red) !important; color: var(--paper) !important; }
+.mission-control .zero-results-notice .notice-glyph { background: var(--purple) !important; color: var(--paper) !important; }
+
+/* -------- Progress timeline: comic step chips on a dashed ink rail -------- */
+.mission-control .timeline {
+  gap: 12px !important;
+  padding: 8px 0 !important;
+}
+
+.mission-control .timeline-step {
+  background: var(--paper) !important;
+  border: 3px solid var(--ink) !important;
+  border-radius: 14px !important;
+  padding: 12px 14px !important;
+  box-shadow: 4px 4px 0 var(--ink) !important;
+  color: var(--ink) !important;
+  opacity: 1 !important;
+  transition: transform 200ms var(--ease-spring), box-shadow 200ms var(--ease-spring), background 200ms ease;
+}
+
+.mission-control .timeline-step::before {
+  /* kill the shimmer overlay from earlier */
+  display: none !important;
+  animation: none !important;
+  background: none !important;
+}
+
+.mission-control .timeline-step.complete {
+  background: var(--green) !important;
+  color: var(--paper) !important;
+}
+.mission-control .timeline-step.complete .timeline-marker {
+  background: var(--paper) !important;
+  color: var(--ink) !important;
+}
+.mission-control .timeline-step.active {
+  background: var(--yellow-tape) !important;
+  color: var(--ink) !important;
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 var(--ink) !important;
+  animation: omnirush-active-throb 1.4s ease-in-out infinite;
+}
+@keyframes omnirush-active-throb {
+  0%, 100% { transform: translate(-2px, -2px); }
+  50% { transform: translate(-4px, -4px); box-shadow: 8px 8px 0 var(--ink) !important; }
+}
+
+.mission-control .timeline-marker {
+  background: var(--paper) !important;
+  color: var(--ink) !important;
+  border: 2px solid var(--ink) !important;
+  border-radius: 999px !important;
+  width: 34px !important;
+  height: 34px !important;
+  font-family: var(--font-display) !important;
+  font-size: 1rem !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: 2px 2px 0 var(--ink) !important;
+}
+
+.mission-control .timeline-step strong,
+.mission-control .timeline-step small {
+  color: inherit !important;
+}
+.mission-control .timeline-step small {
+  font-family: var(--font-body) !important;
+  letter-spacing: 0.02em !important;
+  text-transform: none !important;
+  opacity: 0.9 !important;
+}
+
+/* Source fetch list: dashed ink row dividers + colored glyph chips */
+.mission-control .source-fetch {
+  border-bottom: 2px dashed rgba(12, 14, 15, 0.22) !important;
+  color: var(--ink) !important;
+  padding: 10px 4px !important;
+}
+.mission-control .source-fetch.failed { color: var(--red) !important; }
+.mission-control .source-fetch.failed .source-fetch-glyph { background: var(--red) !important; color: var(--paper) !important; }
+.mission-control .source-fetch.ok .source-fetch-glyph { background: var(--green) !important; color: var(--paper) !important; }
+.mission-control .source-fetch-size {
+  color: rgba(12, 14, 15, 0.65) !important;
+  font-family: var(--font-mono) !important;
+  font-size: 0.7rem !important;
+}
+
+/* -------- Pipeline flow SVG -------- */
+.mission-control .pipeline-flow {
+  background: var(--paper) !important;
+  border: 3px solid var(--ink) !important;
+  border-radius: var(--radius-card) !important;
+  box-shadow: var(--shadow-hard) !important;
+  padding: 20px 12px 30px !important;
+  overflow: visible !important;
+}
+.mission-control .pipeline-flow svg { overflow: visible; }
+.mission-control .pipeline-node-active .pipeline-dot {
+  animation: omnirush-node-bounce 900ms var(--ease-spring) infinite;
+  transform-origin: center;
+}
+@keyframes omnirush-node-bounce {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+.mission-control .pipeline-flow-ants {
+  animation: omnirush-flow 1.4s linear infinite;
+}
+.mission-control .pipeline-node-complete .pipeline-dot {
+  transform-origin: center;
+}
+
+/* -------- Event ticker / activity panel -------- */
+.mission-control .activity-list {
+  gap: 8px !important;
+}
+.mission-control .activity-list li {
+  background: var(--cream) !important;
+  border: 2px solid var(--ink) !important;
+  border-radius: 12px !important;
+  padding: 10px 14px !important;
+  color: var(--ink) !important;
+  box-shadow: 3px 3px 0 var(--ink) !important;
+  font-family: var(--font-mono) !important;
+  font-size: 0.78rem !important;
+}
+.mission-control .activity-pulse {
+  background: var(--red) !important;
+  border: 2px solid var(--ink) !important;
+  width: 10px !important;
+  height: 10px !important;
+  border-radius: 999px !important;
+  box-shadow: 0 0 0 0 rgba(239, 66, 37, 0.6);
+  animation: omnirush-sticker-pulse-red 1.6s infinite !important;
+}
+
+/* -------- Recent runs / capabilities / system stats: sticker rows -------- */
+.mission-control .history-list li,
+.mission-control .capability-row,
+.mission-control .system-panel .health-badges > * {
+  background: var(--paper) !important;
+  border: 2px solid var(--ink) !important;
+  border-radius: 12px !important;
+  padding: 10px 14px !important;
+  box-shadow: 3px 3px 0 var(--ink) !important;
+  color: var(--ink) !important;
+}
+
+.mission-control .history-list li:hover,
+.mission-control .capability-row:hover {
+  background: var(--yellow-tape) !important;
+  transform: translate(-2px, -2px);
+  box-shadow: 5px 5px 0 var(--ink) !important;
+}
+
+.mission-control .history-copy,
+.mission-control .capability-copy {
+  color: var(--ink) !important;
+}
+.mission-control .capability-number {
+  font-family: var(--font-display) !important;
+  color: var(--ink) !important;
+  background: var(--pink) !important;
+  border: 2px solid var(--ink) !important;
+  border-radius: 999px !important;
+  padding: 2px 10px !important;
+  box-shadow: 2px 2px 0 var(--ink) !important;
+  font-size: 0.9rem !important;
+}
+
+/* -------- Report workspace: paper page with torn inner rule -------- */
+.mission-control .report-workspace {
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.mission-control .report-panel {
+  padding: 28px clamp(18px, 3vw, 34px) !important;
+  position: relative !important;
+}
+
+.mission-control .report-panel::after {
+  content: '' !important;
+  position: absolute;
+  inset: 12px;
+  border: 2px dashed rgba(12, 14, 15, 0.22);
+  border-radius: 10px;
+  pointer-events: none;
+  display: block !important;
+}
+
+.mission-control .report-body {
+  color: var(--ink) !important;
+}
+.mission-control .report-body h1,
+.mission-control .report-body h2,
+.mission-control .report-body h3 {
+  font-family: var(--font-display) !important;
+  font-weight: 400 !important;
+  letter-spacing: 0.02em !important;
+  text-transform: uppercase !important;
+  color: var(--ink) !important;
+  text-shadow: 2px 2px 0 var(--yellow-tape) !important;
+  margin-top: 26px !important;
+}
+.mission-control .report-body h2 { font-size: 1.9rem !important; }
+.mission-control .report-body h3 { font-size: 1.4rem !important; text-shadow: 2px 2px 0 var(--pink) !important; }
+.mission-control .report-body p,
+.mission-control .report-body li {
+  font-family: var(--font-body) !important;
+  color: var(--ink) !important;
+  font-size: 1rem !important;
+  line-height: 1.65 !important;
+}
+.mission-control .report-body strong { color: var(--ink) !important; }
+.mission-control .report-body a { color: var(--blue) !important; text-decoration: underline 3px !important; }
+.mission-control .report-body a:hover { color: var(--red) !important; }
+.mission-control .report-body code {
+  background: var(--cream) !important;
+  border: 2px solid var(--ink) !important;
+  border-radius: 6px !important;
+  padding: 1px 6px !important;
+  font-family: var(--font-mono) !important;
+  color: var(--ink) !important;
+}
+.mission-control .report-body blockquote {
+  background: var(--yellow-tape) !important;
+  border: 3px solid var(--ink) !important;
+  border-left-width: 10px !important;
+  border-radius: 10px !important;
+  padding: 12px 16px !important;
+  color: var(--ink) !important;
+  box-shadow: 4px 4px 0 var(--ink) !important;
+}
+
+/* Citation superscripts: mini plum stickers */
+.mission-control .citation,
+.mission-control .report-citations sup,
+.mission-control .markdown-body sup {
+  background: var(--purple) !important;
+  color: var(--paper) !important;
+  border: 2px solid var(--ink) !important;
+  border-radius: 999px !important;
+  padding: 0 6px !important;
+  margin: 0 2px !important;
+  font-family: var(--font-tape) !important;
+  font-size: 0.62rem !important;
+  line-height: 1.4 !important;
+  box-shadow: 2px 2px 0 var(--ink) !important;
+  text-decoration: none !important;
+  display: inline-block !important;
+  transform: translateY(-4px);
+  transition: transform 160ms var(--ease-spring), box-shadow 160ms var(--ease-spring);
+}
+.mission-control .citation:hover {
+  background: var(--pink) !important;
+  color: var(--ink) !important;
+  transform: translateY(-6px) rotate(-3deg) !important;
+  box-shadow: 3px 3px 0 var(--ink) !important;
+}
+
+/* Source cards inside report */
+.mission-control .source-card {
+  background: var(--paper) !important;
+  border: 3px solid var(--ink) !important;
+  border-radius: 14px !important;
+  padding: 14px !important;
+  box-shadow: 4px 4px 0 var(--ink) !important;
+  color: var(--ink) !important;
+}
+.mission-control .source-card:hover {
+  background: var(--yellow-tape) !important;
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 var(--ink) !important;
+}
+.mission-control .source-number {
+  font-family: var(--font-tape) !important;
+  color: var(--ink) !important;
+  background: var(--yellow-tape) !important;
+  border: 2px solid var(--ink) !important;
+  border-radius: 999px !important;
+  padding: 2px 10px !important;
+  box-shadow: 2px 2px 0 var(--ink) !important;
+}
+
+/* -------- Source intelligence list: colored rows -------- */
+.mission-control .source-filter {
+  padding: 12px 14px !important;
+  background: var(--paper) !important;
+  border: 3px solid var(--ink) !important;
+  border-radius: 12px !important;
+  box-shadow: 4px 4px 0 var(--ink) !important;
+  color: var(--ink) !important;
+  font-family: var(--font-body) !important;
+}
+.mission-control .intel-source-row {
+  background: var(--paper) !important;
+  border: 3px solid var(--ink) !important;
+  border-radius: 14px !important;
+  padding: 12px 14px !important;
+  box-shadow: 4px 4px 0 var(--ink) !important;
+  color: var(--ink) !important;
+  margin-bottom: 10px !important;
+}
+.mission-control .intel-source-row:hover {
+  background: var(--blue) !important;
+  color: var(--paper) !important;
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 var(--ink) !important;
+}
+.mission-control .intel-source-row:hover .intel-source-copy small { color: rgba(255, 248, 238, 0.8) !important; }
+.mission-control .intel-source-row:hover .intel-source-id { background: var(--paper) !important; color: var(--ink) !important; }
+.mission-control .intel-source-id {
+  font-family: var(--font-tape) !important;
+  background: var(--yellow-tape) !important;
+  color: var(--ink) !important;
+  border: 2px solid var(--ink) !important;
+  border-radius: 999px !important;
+  padding: 2px 10px !important;
+  box-shadow: 2px 2px 0 var(--ink) !important;
+}
+.mission-control .intel-source-copy small {
+  color: rgba(12, 14, 15, 0.62) !important;
+}
+
+.mission-control .source-outcome-row {
+  border-bottom: 2px dashed rgba(12, 14, 15, 0.22) !important;
+  color: var(--ink) !important;
+}
+.mission-control .source-outcome-status {
+  font-family: var(--font-tape) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.06em !important;
+  border-radius: 999px !important;
+  padding: 3px 10px !important;
+  border: 2px solid var(--ink) !important;
+  box-shadow: 2px 2px 0 var(--ink) !important;
+}
+.mission-control .source-outcome-status.dead { background: var(--red) !important; color: var(--paper) !important; }
+.mission-control .source-outcome-status.skipped { background: var(--purple) !important; color: var(--paper) !important; }
+
+.mission-control .text-button {
+  font-family: var(--font-tape) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.08em !important;
+  font-size: 0.72rem !important;
+  color: var(--ink) !important;
+  background: transparent !important;
+  border: 2px solid var(--ink) !important;
+  border-radius: 999px !important;
+  padding: 5px 12px !important;
+}
+.mission-control .text-button:hover {
+  background: var(--yellow-tape) !important;
+  box-shadow: 3px 3px 0 var(--ink) !important;
+  transform: translate(-1px, -1px);
+}
+
+/* -------- Citation heatmap: color-block cells with ink outlines -------- */
+.mission-control .citation-heatmap {
+  padding: 22px !important;
+}
+.mission-control .heatmap-heading {
+  font-family: var(--font-display) !important;
+  font-size: 1.6rem !important;
+  color: var(--ink) !important;
+  text-shadow: 2px 2px 0 var(--yellow-tape) !important;
+  margin-bottom: 14px !important;
+}
+.mission-control .heatmap-grid {
+  gap: 6px !important;
+  padding: 8px !important;
+}
+.mission-control .heatmap-row {
+  gap: 6px !important;
+}
+.mission-control .heatmap-row-label {
+  font-family: var(--font-tape) !important;
+  font-size: 0.7rem !important;
+  letter-spacing: 0.05em !important;
+  text-transform: uppercase !important;
+  color: var(--ink) !important;
+}
+.mission-control .heatmap-col-label,
+.mission-control .heatmap-corner {
+  font-family: var(--font-display) !important;
+  color: var(--ink) !important;
+  font-size: 0.9rem !important;
+}
+.mission-control .heatmap-cell {
+  border: 2px solid var(--ink) !important;
+  border-radius: 8px !important;
+  box-shadow: 2px 2px 0 var(--ink) !important;
+  background: var(--cream) !important;
+  transition: transform 160ms var(--ease-spring), box-shadow 160ms var(--ease-spring), background 200ms ease;
+}
+.mission-control .heatmap-cell[data-empty='true'],
+.mission-control .heatmap-cell.empty {
+  background: var(--paper) !important;
+  box-shadow: none !important;
+  border-style: dashed !important;
+}
+.mission-control .heatmap-cell:hover {
+  transform: translate(-2px, -2px) scale(1.06);
+  box-shadow: 4px 4px 0 var(--ink) !important;
+  background: var(--pink) !important;
+}
+.mission-control .heatmap-cell-count {
+  font-family: var(--font-mono) !important;
+  color: var(--ink) !important;
+  font-size: 0.68rem !important;
+  font-weight: 700 !important;
+}
+.mission-control .heatmap-hover {
+  background: var(--ink) !important;
+  color: var(--yellow-tape) !important;
+  border: 3px solid var(--ink) !important;
+  border-radius: 999px !important;
+  padding: 6px 14px !important;
+  font-family: var(--font-tape) !important;
+  font-size: 0.72rem !important;
+  letter-spacing: 0.06em !important;
+  text-transform: uppercase !important;
+  box-shadow: 4px 4px 0 rgba(12, 14, 15, 0.35) !important;
+  margin-top: 12px !important;
+  display: inline-block;
+}
+.mission-control .heatmap-hover-count { color: var(--pink) !important; }
+
+/* -------- Command palette: paper sticker modal, no blur -------- */
+.mission-control .command-palette-scrim {
+  background: rgba(12, 14, 15, 0.55) !important;
+  backdrop-filter: none !important;
+}
+.mission-control .command-palette {
+  background: var(--paper) !important;
+  border: 3px solid var(--ink) !important;
+  border-radius: var(--radius-card) !important;
+  box-shadow: 10px 10px 0 var(--ink) !important;
+  color: var(--ink) !important;
+  overflow: hidden;
+  animation: omnirush-palette-slam 260ms var(--ease-spring) both !important;
+}
+@keyframes omnirush-palette-slam {
+  0% { opacity: 0; transform: translateY(-14px) rotate(-1.5deg) scale(0.96); }
+  100% { opacity: 1; transform: translateY(0) rotate(0) scale(1); }
+}
+.mission-control .command-palette-input {
+  background: var(--yellow-tape) !important;
+  border: none !important;
+  border-bottom: 3px solid var(--ink) !important;
+  color: var(--ink) !important;
+  font-family: var(--font-body) !important;
+  font-size: 1rem !important;
+  padding: 16px 20px !important;
+}
+.mission-control .command-palette-input::placeholder {
+  color: rgba(12, 14, 15, 0.55) !important;
+  font-family: var(--font-tape) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.08em !important;
+  font-size: 0.8rem !important;
+}
+.mission-control .command-palette-section-label {
+  font-family: var(--font-tape) !important;
+  font-size: 0.68rem !important;
+  letter-spacing: 0.12em !important;
+  text-transform: uppercase !important;
+  color: var(--ink) !important;
+  background: var(--pink) !important;
+  padding: 4px 12px !important;
+  margin: 0 !important;
+}
+.mission-control .command-palette-list button {
+  color: var(--ink) !important;
+  border-bottom: 2px dashed rgba(12, 14, 15, 0.18) !important;
+  padding: 12px 16px !important;
+}
+.mission-control .command-palette-list button:hover,
+.mission-control .command-palette-list button.active {
+  background: var(--yellow-tape) !important;
+}
+.mission-control .command-palette-row-label {
+  font-family: var(--font-body) !important;
+  font-weight: 700 !important;
+  color: var(--ink) !important;
+}
+.mission-control .command-palette-row-hint {
+  font-family: var(--font-mono) !important;
+  color: rgba(12, 14, 15, 0.65) !important;
+  font-size: 0.72rem !important;
+}
+.mission-control .command-palette-empty {
+  color: rgba(12, 14, 15, 0.6) !important;
+  font-family: var(--font-tape) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.08em !important;
+}
+.mission-control .command-palette-footer {
+  background: var(--cream) !important;
+  border-top: 3px solid var(--ink) !important;
+  color: var(--ink) !important;
+  font-family: var(--font-mono) !important;
+  font-size: 0.68rem !important;
+}
+.mission-control .command-palette-footer kbd {
+  background: var(--paper) !important;
+  color: var(--ink) !important;
+  border: 2px solid var(--ink) !important;
+  border-radius: 4px !important;
+  padding: 1px 6px !important;
+  box-shadow: 2px 2px 0 var(--ink) !important;
+  font-family: var(--font-mono) !important;
+}
+
+/* -------- Notices: colored sticker banners -------- */
+.mission-control .run-error {
+  background: var(--red) !important;
+  color: var(--paper) !important;
+  border: 3px solid var(--ink) !important;
+  border-radius: var(--radius-card) !important;
+  box-shadow: var(--shadow-hard) !important;
+  padding: 18px 22px !important;
+  font-family: var(--font-body) !important;
+  font-weight: 500 !important;
+}
+.mission-control .run-notice,
+.mission-control .latency-budget-panel {
+  padding: 22px !important;
+}
+.mission-control .failure-notice {
+  background: var(--red) !important;
+  color: var(--paper) !important;
+}
+.mission-control .failure-notice h2,
+.mission-control .failure-notice strong,
+.mission-control .failure-notice p {
+  color: var(--paper) !important;
+}
+.mission-control .zero-results-notice {
+  background: var(--purple) !important;
+  color: var(--paper) !important;
+}
+.mission-control .zero-results-notice h2,
+.mission-control .zero-results-notice p,
+.mission-control .zero-results-notice strong { color: var(--paper) !important; }
+.mission-control .latency-budget-panel {
+  background: var(--blue) !important;
+  color: var(--paper) !important;
+}
+.mission-control .latency-budget-panel h2,
+.mission-control .latency-budget-panel p,
+.mission-control .latency-budget-panel strong { color: var(--paper) !important; }
+.mission-control .latency-budget-panel .latency-budget-icon {
+  background: var(--yellow-tape) !important;
+  color: var(--ink) !important;
+}
+.mission-control .report-incomplete-note {
+  background: var(--yellow-tape) !important;
+  color: var(--ink) !important;
+  border: 3px solid var(--ink) !important;
+  border-radius: 12px !important;
+  padding: 10px 14px !important;
+  box-shadow: 4px 4px 0 var(--ink) !important;
+  font-family: var(--font-tape) !important;
+  letter-spacing: 0.05em !important;
+  text-transform: uppercase !important;
+  font-size: 0.78rem !important;
+}
+.mission-control .notice-actions .secondary-action {
+  background: var(--paper) !important;
+  color: var(--ink) !important;
+}
+.mission-control .notice-guidance {
+  color: inherit !important;
+  opacity: 0.9;
+}
+
+/* -------- PDF row -------- */
+.mission-control .pdf-download-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}
+.mission-control .pdf-unavailable {
+  color: rgba(12, 14, 15, 0.62) !important;
+  font-family: var(--font-mono) !important;
+  font-size: 0.72rem !important;
+}
+
+/* -------- Workspace pages (Report / Sources standalone) -------- */
+.mission-control .workspace-page {
+  gap: 24px !important;
+  padding-top: 8px !important;
+}
+.mission-control .page-cross-links {
+  display: inline-flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 12px 16px;
+  background: var(--paper);
+  border: 3px solid var(--ink);
+  border-radius: 999px;
+  box-shadow: var(--shadow-hard-sm);
+}
+.mission-control .page-cross-links a,
+.mission-control .page-cross-links button {
+  font-family: var(--font-tape) !important;
+  font-size: 0.72rem !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+  color: var(--ink) !important;
+  background: transparent !important;
+  border: 2px solid var(--ink) !important;
+  border-radius: 999px !important;
+  padding: 6px 14px !important;
+}
+.mission-control .page-cross-links a:hover,
+.mission-control .page-cross-links button:hover {
+  background: var(--pink) !important;
+  color: var(--paper) !important;
+  transform: translate(-2px, -2px);
+  box-shadow: 3px 3px 0 var(--ink) !important;
+}
+
+/* Health badges / system stats */
+.mission-control .health-badges span {
+  font-family: var(--font-tape) !important;
+  font-size: 0.66rem !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+  background: var(--cream) !important;
+  color: var(--ink) !important;
+  border: 2px solid var(--ink) !important;
+  border-radius: 999px !important;
+  padding: 4px 10px !important;
+}
+.mission-control .health-badges span[data-ok='true'],
+.mission-control .health-badges span.ok {
+  background: var(--green) !important;
+  color: var(--paper) !important;
+}
+
+/* Empty states / placeholders */
+.mission-control .empty-state,
+.mission-control .report-placeholder {
+  color: rgba(12, 14, 15, 0.55) !important;
+  font-family: var(--font-body) !important;
+  font-style: italic !important;
+}
+
+/* Torn paper wave divider between sections uses the .workspace-page container gap;
+   add a subtle marquee tape ribbon across the top of the shell. */
+.mission-control::before {
+  content: '' !important;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 8px;
+  z-index: 30;
+  background: repeating-linear-gradient(
+    45deg,
+    var(--ink) 0 12px,
+    var(--yellow-tape) 12px 24px
+  );
+  opacity: 0.9;
+  pointer-events: none;
+}
+
+/* Reduce motion: neutralize sticker pop, throb, wiggle, spin, pulse. */
+@media (prefers-reduced-motion: reduce) {
+  .mission-control .command-deck::before,
+  .mission-control .pipeline-node-active .pipeline-dot,
+  .mission-control .timeline-step.active,
+  .mission-control .status-dot,
+  .mission-control .status-dot.offline,
+  .mission-control .activity-pulse,
+  .mission-control .voice-toggle.listening,
+  .mission-control .command-palette,
+  .mission-control .ink-word {
+    animation: none !important;
+  }
+}
+

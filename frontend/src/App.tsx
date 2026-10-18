@@ -14,13 +14,17 @@ import PdfDownload from './components/PdfDownload'
 import ProgressTimeline, { type FetchedSource } from './components/ProgressTimeline'
 import ReportView from './components/ReportView'
 import CapabilitiesPanel from './components/CapabilitiesPanel'
+import CitationHeatmap from './components/CitationHeatmap'
+import CommandPalette, { type CommandItem } from './components/CommandPalette'
 import EventTicker, { type ActivityItem } from './components/EventTicker'
 import RecentRuns, { type HistoryEntry } from './components/RecentRuns'
 import { LatencyBudgetPanel, RunFailureNotice, type RunFailureDetails, ZeroResultsNotice } from './components/RunStateNotices'
+import PipelineFlow from './components/PipelineFlow'
 import SourceIntelligence from './components/SourceIntelligence'
 import SystemStats from './components/SystemStats'
 import TopicForm from './components/TopicForm'
 import WorkspaceHeader, { type WorkspaceView } from './components/WorkspaceHeader'
+import { useSoundCues } from './hooks/useSoundCues'
 import './App.css'
 
 type AppStatus = 'idle' | 'running' | 'done' | 'error'
@@ -28,6 +32,18 @@ type AppStatus = 'idle' | 'running' | 'done' | 'error'
 const LAST_RUN_KEY = 'omnirush:last-run-id'
 const HISTORY_KEY = 'omnirush:run-history'
 const INITIAL_TOPIC = 'Quantum computing 2026'
+const COMMAND_EXAMPLES = [
+  'Quantum computing 2026',
+  'AI agent reliability',
+  'Future of remote work',
+  'Climate tech in 2026',
+]
+
+function readViewFromHash(): WorkspaceView {
+  const raw = window.location.hash.replace(/^#\/?/, '')
+  if (raw === 'reports' || raw === 'sources') return raw
+  return 'control'
+}
 
 type LatencyBudget = {
   latencyMs: number
@@ -201,8 +217,10 @@ function App() {
   const [healthError, setHealthError] = useState('')
   const [startedAt, setStartedAt] = useState<number | null>(null)
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
-  const [activeView, setActiveView] = useState<WorkspaceView>('control')
+  const [activeView, setActiveView] = useState<WorkspaceView>(readViewFromHash)
   const [projectorMode, setProjectorMode] = useState(false)
+  const [paletteOpen, setPaletteOpen] = useState(false)
+  const sound = useSoundCues()
   const stream = useRef<ReportEventStream | null>(null)
   const activeRunId = useRef<string | null>(null)
   const hydratedReport = useRef(false)
@@ -372,6 +390,7 @@ function App() {
     }
     if (incoming.type === 'run_completed') {
       closeStream()
+      sound.play('complete')
       void finishFromSnapshot(id).catch((terminalError: unknown) => {
         if (activeRunId.current !== id) return
         setStatus('error')
@@ -390,8 +409,9 @@ function App() {
       if (payload.partial === true) setPartialReport(true)
       setConnectionNote('')
       updateHistory({ id, topic, status: 'failed', createdAt: new Date().toISOString() })
+      sound.play('error')
     }
-  }, [closeStream, finishFromSnapshot, topic, updateHistory])
+  }, [closeStream, finishFromSnapshot, topic, updateHistory, sound])
 
   const connectToRun = useCallback((id: string) => {
     closeStream()
@@ -509,6 +529,68 @@ function App() {
 
   useEffect(() => () => closeStream(), [closeStream])
 
+  // Keep the browser URL in sync with the active page so refreshes restore
+  // the tab the operator was on (Mission control / Reports / Sources).
+  useEffect(() => {
+    const onHashChange = () => setActiveView(readViewFromHash())
+    window.addEventListener('hashchange', onHashChange)
+    return () => window.removeEventListener('hashchange', onHashChange)
+  }, [])
+
+  // Signal chime whenever the pipeline advances to a new stage.
+  const previousStage = useRef<RunStage | null>(null)
+  useEffect(() => {
+    if (previousStage.current && previousStage.current !== stage && status === 'running') {
+      sound.play('stage')
+    }
+    previousStage.current = stage
+  }, [stage, status, sound])
+
+  // Cursor-following glow inside cards: writes --mx/--my for the CSS gradient.
+  useEffect(() => {
+    const handler = (event: MouseEvent) => {
+      const target = (event.target as HTMLElement | null)?.closest(
+        '.dashboard-panel, .report-workspace, .source-intelligence-panel, .citation-heatmap',
+      ) as HTMLElement | null
+      if (!target) return
+      const rect = target.getBoundingClientRect()
+      target.style.setProperty('--mx', `${event.clientX - rect.left}px`)
+      target.style.setProperty('--my', `${event.clientY - rect.top}px`)
+    }
+    document.addEventListener('mousemove', handler)
+    return () => document.removeEventListener('mousemove', handler)
+  }, [])
+
+  // Global keyboard shortcuts: ⌘K palette, / focus topic, 1/2/3 pages, p PDF.
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null
+      const typingInField =
+        target &&
+        (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault()
+        setPaletteOpen((open) => !open)
+        return
+      }
+      if (typingInField) return
+      if (event.key === '/') {
+        event.preventDefault()
+        document.getElementById('topic')?.focus()
+        return
+      }
+      if (event.key === '1') { event.preventDefault(); navigateTo('control'); return }
+      if (event.key === '2') { event.preventDefault(); navigateTo('reports'); return }
+      if (event.key === '3') { event.preventDefault(); navigateTo('sources'); return }
+      if (event.key.toLowerCase() === 'p' && status === 'done' && runId) {
+        event.preventDefault()
+        window.open(`/api/reports/${encodeURIComponent(runId)}/report.pdf`, '_blank', 'noopener')
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [status, runId])
+
   async function startResearch(requestedTopic: string) {
     const normalizedTopic = requestedTopic.trim()
     if (!normalizedTopic) {
@@ -540,6 +622,7 @@ function App() {
     setStartedAt(Date.now())
     setElapsedSeconds(0)
     hydratedReport.current = false
+    sound.play('start')
 
     try {
       const created = await createReport(normalizedTopic)
@@ -553,6 +636,7 @@ function App() {
       const requestMessage = requestError instanceof Error ? requestError.message : 'The research run could not be started.'
       setError(requestMessage)
       setFailure(failureDetails(requestMessage))
+      sound.play('error')
     }
   }
 
@@ -588,10 +672,37 @@ function App() {
 
   const statusLabel = status === 'running' ? 'RESEARCH ACTIVE' : status === 'done' ? 'REPORT READY' : status === 'error' ? 'CHECK FAILED' : 'SYSTEM READY'
 
+  const commandItems: CommandItem[] = (() => {
+    const items: CommandItem[] = [
+      { id: 'go-control', label: 'Go to Mission control', hint: '1', section: 'Navigate', keywords: 'home deck topic start', run: () => navigateTo('control') },
+      { id: 'go-reports', label: 'Go to Report workspace', hint: '2', section: 'Navigate', keywords: 'markdown pdf output', run: () => navigateTo('reports') },
+      { id: 'go-sources', label: 'Go to Source intelligence', hint: '3', section: 'Navigate', keywords: 'evidence citations heatmap', run: () => navigateTo('sources') },
+      { id: 'focus-topic', label: 'Focus topic input', hint: '/', section: 'Actions', keywords: 'search type write', run: () => { navigateTo('control'); window.setTimeout(() => document.getElementById('topic')?.focus(), 0) } },
+      { id: 'toggle-projector', label: projectorMode ? 'Exit projector mode' : 'Enter projector mode', section: 'Actions', keywords: 'demo stage zoom', run: () => setProjectorMode((v) => !v) },
+      { id: 'toggle-sound', label: sound.enabled ? 'Mute sound cues' : 'Enable sound cues', section: 'Actions', keywords: 'audio chime beep', run: sound.toggle },
+    ]
+    if (status === 'done' && runId) {
+      items.push({ id: 'download-pdf', label: 'Download report PDF', hint: 'p', section: 'Actions', keywords: 'export save', run: () => window.open(`/api/reports/${encodeURIComponent(runId)}/report.pdf`, '_blank', 'noopener') })
+    }
+    if (status === 'error' || status === 'done') {
+      items.push({ id: 'retry-run', label: 'Retry the last research run', section: 'Actions', keywords: 'again rerun start', run: () => void startResearch(topic) })
+    }
+    for (const example of COMMAND_EXAMPLES) {
+      items.push({ id: `example-${example}`, label: `Research: ${example}`, section: 'Examples', keywords: example, run: () => { setTopic(example); navigateTo('control') } })
+    }
+    for (const entry of history.slice(0, 5)) {
+      items.push({ id: `history-${entry.id}`, label: entry.topic, hint: entry.status, section: 'Recent runs', keywords: entry.id, run: () => void selectRun(entry.id) })
+    }
+    return items
+  })()
+
   function navigateTo(view: WorkspaceView): void {
     setActiveView(view)
-    const target = view === 'control' ? 'command-deck' : view === 'reports' ? 'report-workspace' : 'source-intelligence'
-    document.getElementById(target)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    const target = `#/${view}`
+    if (window.location.hash !== target) {
+      window.location.hash = target
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   return (
@@ -603,55 +714,88 @@ function App() {
         onViewChange={navigateTo}
         onProjectorToggle={() => setProjectorMode((enabled) => !enabled)}
         projectorMode={projectorMode}
+        soundEnabled={sound.enabled}
+        onSoundToggle={sound.toggle}
+        onOpenPalette={() => setPaletteOpen(true)}
       />
-
-      <section className="command-deck" id="command-deck">
-        <div className="command-copy">
-          <p className="eyebrow accent">COMMAND DECK / READY FOR INPUT</p>
-          <h1>Ask the system anything.</h1>
-          <p>Launch a citation-backed research operation and watch every stage become observable.</p>
-        </div>
-        <div className="command-form-area">
-          <TopicForm topic={topic} isRunning={status === 'running'} onTopicChange={setTopic} onSubmit={handleSubmit} />
-          <div className="command-meta">
-            <span><strong>{runId ? runId.slice(0, 10) : 'NO ACTIVE RUN'}</strong> {runId ? ' / RUN ID' : ' / START A MISSION'}</span>
-            <span>{health?.mock_mode ? 'Deterministic demo data' : 'Live research providers'}</span>
-            <span>{status === 'running' ? `Elapsed ${formatDuration(elapsedSeconds)}` : 'One click to begin'}</span>
-          </div>
-        </div>
-      </section>
 
       {error && <p className="run-error" role="alert">{error}</p>}
       {failure && <RunFailureNotice failure={failure} onRetry={() => void startResearch(topic)} onEdit={editTopic} />}
       {latencyWarning && <LatencyBudgetPanel latencyMs={latencyBudget?.latencyMs ?? null} budgetMs={latencyBudget?.budgetMs ?? null} />}
 
-      <section className="dashboard-layout" aria-label="Mission dashboard">
-        <div className="dashboard-main-column">
-          <section className="live-deck dashboard-panel" id="live-run" aria-labelledby="live-title">
-            <div className="panel-heading">
-              <div>
-                <p className="eyebrow">ACTIVE OPERATION</p>
-                <h2 id="live-title">Live run deck</h2>
-              </div>
-              <span className="panel-index">{status === 'idle' ? 'STANDBY' : stage}</span>
+      {activeView === 'control' && (
+        <>
+          <section className="command-deck" id="command-deck">
+            <div className="command-copy">
+              <p className="eyebrow accent">COMMAND DECK / READY FOR INPUT</p>
+              <h1>
+                {['Ask', 'the', 'system', 'anything.'].map((word, i) => (
+                  <span className="ink-word" key={`${word}-${i}`}>{word} </span>
+                ))}
+              </h1>
+              <p>Launch a citation-backed research operation and watch every stage become observable.</p>
             </div>
-            {status === 'idle' ? (
-              <div className="empty-live-state"><span className="empty-glyph">◌</span><div><strong>No operation in progress</strong><p>Use the command deck above to put the research pipeline to work.</p></div></div>
-            ) : (
-              <ProgressTimeline
+            <div className="command-form-area">
+              <TopicForm topic={topic} isRunning={status === 'running'} onTopicChange={setTopic} onSubmit={handleSubmit} />
+              <div className="command-meta">
+                <span><strong>{runId ? runId.slice(0, 10) : 'NO ACTIVE RUN'}</strong> {runId ? ' / RUN ID' : ' / START A MISSION'}</span>
+                <span>{health?.mock_mode ? 'Deterministic demo data' : 'Live research providers'}</span>
+                <span>{status === 'running' ? `Elapsed ${formatDuration(elapsedSeconds)}` : 'One click to begin'}</span>
+              </div>
+            </div>
+          </section>
+
+          <section className="dashboard-layout" aria-label="Mission dashboard">
+            <div className="dashboard-main-column">
+              <section className="live-deck dashboard-panel" id="live-run" aria-labelledby="live-title">
+                <div className="panel-heading">
+                  <div>
+                    <p className="eyebrow">ACTIVE OPERATION</p>
+                    <h2 id="live-title">Live run deck</h2>
+                  </div>
+                  <span className="panel-index">{status === 'idle' ? 'STANDBY' : stage}</span>
+                </div>
+                <PipelineFlow stage={stage} />
+                {status === 'idle' ? (
+                  <div className="empty-live-state"><span className="empty-glyph">◌</span><div><strong>No operation in progress</strong><p>Use the command deck above to put the research pipeline to work.</p></div></div>
+                ) : (
+                  <ProgressTimeline
+                    stage={stage}
+                    sourceFetched={sourceCount}
+                    sourceSucceeded={sourceSucceeded}
+                    sourceTotal={sourceTotal}
+                    fetchedSources={fetchedSources}
+                    eventCount={eventCount}
+                    connectionNote={connectionNote}
+                  />
+                )}
+              </section>
+
+              <EventTicker items={activity} />
+            </div>
+
+            <aside className="dashboard-side-column">
+              <SystemStats
+                health={health}
+                healthError={healthError}
+                status={status}
                 stage={stage}
                 sourceFetched={sourceCount}
                 sourceSucceeded={sourceSucceeded}
-                sourceTotal={sourceTotal}
-                fetchedSources={fetchedSources}
+                sourceRetained={sources.length}
                 eventCount={eventCount}
-                connectionNote={connectionNote}
+                elapsed={formatDuration(elapsedSeconds)}
+                reportLength={report.length}
               />
-            )}
+              <RecentRuns entries={history} activeId={runId} onSelect={(id) => void selectRun(id)} onClear={() => { setHistory([]); saveHistory([]) }} />
+              <CapabilitiesPanel onUseExample={(example) => { setTopic(example); navigateTo('control') }} />
+            </aside>
           </section>
+        </>
+      )}
 
-          <EventTicker items={activity} />
-
+      {activeView === 'reports' && (
+        <div className="workspace-page">
           <section className="report-workspace" id="report-workspace" aria-labelledby="report-workspace-title">
             <div className="workspace-heading">
               <div><p className="eyebrow">OUTPUT WORKSPACE</p><h2 id="report-workspace-title">Report workspace</h2></div>
@@ -664,32 +808,43 @@ function App() {
                 <ReportView report={report} sources={sources} isStreaming={status === 'running'} isPartial={partialReport} partialReason={partialReason} />
                 {status === 'done' && runId && !partialReport && <PdfDownload runId={runId} />}
                 {partialReport && <p className="pdf-unavailable" role="status">PDF export is unavailable until the report is complete. You can review the partial Markdown and citations above.</p>}
+                <div className="page-cross-links">
+                  <button type="button" className="text-button" onClick={() => navigateTo('sources')}>Inspect the evidence registry →</button>
+                  <button type="button" className="text-button" onClick={() => navigateTo('control')}>← Return to Mission control</button>
+                </div>
               </>
             ) : (
-              <div className="workspace-empty"><span className="workspace-empty-number">02</span><div><strong>Your report will appear here</strong><p>Live Markdown, inline citations, source cards, and PDF export are all connected to the same run.</p></div></div>
+              <div className="workspace-empty">
+                <span className="workspace-empty-number">02</span>
+                <div>
+                  <strong>Your report will appear here</strong>
+                  <p>Live Markdown, inline citations, source cards, and PDF export land on this page as the pipeline streams. Nothing is running yet.</p>
+                  <button type="button" className="text-button" onClick={() => navigateTo('control')}>Open Mission control →</button>
+                </div>
+              </div>
             )}
           </section>
         </div>
+      )}
 
-        <aside className="dashboard-side-column">
-          <SystemStats
-            health={health}
-            healthError={healthError}
-            status={status}
-            stage={stage}
-            sourceFetched={sourceCount}
-            sourceSucceeded={sourceSucceeded}
-            sourceRetained={sources.length}
-            eventCount={eventCount}
-            elapsed={formatDuration(elapsedSeconds)}
-            reportLength={report.length}
+      {activeView === 'sources' && (
+        <div className="workspace-page">
+          <SourceIntelligence
+            sources={sources}
+            fetchedSources={fetchedSources}
+            attemptedSources={sourceCount}
+            succeededSources={sourceSucceeded}
+            onOpenReport={() => navigateTo('reports')}
           />
-          <RecentRuns entries={history} activeId={runId} onSelect={(id) => void selectRun(id)} onClear={() => { setHistory([]); saveHistory([]) }} />
-          <CapabilitiesPanel onUseExample={(example) => { setTopic(example); navigateTo('control') }} />
-        </aside>
-      </section>
+          <CitationHeatmap report={report} sources={sources} />
+          <div className="page-cross-links">
+            <button type="button" className="text-button" onClick={() => navigateTo('reports')}>← Back to the report</button>
+            <button type="button" className="text-button" onClick={() => navigateTo('control')}>Open Mission control →</button>
+          </div>
+        </div>
+      )}
 
-      <SourceIntelligence sources={sources} fetchedSources={fetchedSources} attemptedSources={sourceCount} succeededSources={sourceSucceeded} onOpenReport={() => navigateTo('reports')} />
+      <CommandPalette key={paletteOpen ? 'open' : 'closed'} open={paletteOpen} items={commandItems} onClose={() => setPaletteOpen(false)} />
 
       <footer className="platform-footer">
         <span>OMNIRUSH RESEARCH PLATFORM</span>
