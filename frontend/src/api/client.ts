@@ -62,6 +62,14 @@ export type ReportEvent = {
   created_at: string
 }
 
+export type HealthSnapshot = {
+  status: string
+  search_provider: string
+  search_configured: boolean
+  llm_configured: boolean
+  mock_mode: boolean
+}
+
 export type ReportEventStreamOptions = {
   onEvent: (event: ReportEvent) => void
   onOpen?: () => void
@@ -115,6 +123,10 @@ export async function getReportMarkdown(runId: string): Promise<string> {
     throw new ApiError(detail, response.status)
   }
   return response.text()
+}
+
+export async function getHealth(): Promise<HealthSnapshot> {
+  return requestJson<HealthSnapshot>(`${API_ROOT}/health`)
 }
 
 const REPORT_EVENT_TYPES: ReportEventType[] = [

@@ -127,6 +127,8 @@ uv run --offline python -m scripts.mock_report_check --output report.md
 When the mock backend is running, open <http://localhost:5173>, select the pre-loaded
 `Quantum computing 2026` example, and click **Start research**. The timeline lights each stage,
 source fetches appear as checkmarks, and the report types itself into the citation-aware viewer.
+The platform dashboard also includes a command deck, live event stream, system telemetry, browser-local
+recent-run archive, research capability launcher, searchable source intelligence, and projector mode.
 Finished reports expose **Save as PDF**, which calls `GET /api/reports/{id}/report.pdf`. The first
 request renders with WeasyPrint and atomically caches the artifact as `data/runs/{id}.pdf`; later
 requests serve the cached file. The Docker image includes the Linux Pango/Cairo libraries needed
