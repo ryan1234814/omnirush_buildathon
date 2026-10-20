@@ -1,0 +1,2591 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <title>Omnirush — Research that shows its work</title>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <script src="assets/music/audio-data.js"></script>
+    <style>
+      @font-face {
+        font-family: 'Bangers';
+        src: url('assets/fonts/Bangers.woff2') format('woff2');
+        font-weight: 400;
+        font-style: normal;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: 'Titan One';
+        src: url('assets/fonts/TitanOne.woff2') format('woff2');
+        font-weight: 400;
+        font-style: normal;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: 'Space Grotesk';
+        src: url('assets/fonts/SpaceGrotesk.woff2') format('woff2');
+        font-weight: 400;
+        font-style: normal;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: 'Space Grotesk';
+        src: url('assets/fonts/SpaceGrotesk.woff2') format('woff2');
+        font-weight: 700;
+        font-style: normal;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: 'Space Mono';
+        src: url('assets/fonts/SpaceMono-400.woff2') format('woff2');
+        font-weight: 400;
+        font-style: normal;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: 'Space Mono';
+        src: url('assets/fonts/SpaceMono-700.woff2') format('woff2');
+        font-weight: 700;
+        font-style: normal;
+        font-display: swap;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: #fff8ee;
+      }
+      #root {
+        width: 100%;
+        height: 100%;
+        position: relative;
+        overflow: hidden;
+        background: #fff8ee;
+        color: #0c0e0f;
+        font-family: 'Space Grotesk', sans-serif;
+      }
+
+      .paper-fill {
+        position: absolute;
+        inset: 0;
+        background:
+          radial-gradient(circle at 12% 8%, rgba(251, 201, 62, 0.20), transparent 34%),
+          radial-gradient(circle at 88% 78%, rgba(173, 105, 255, 0.13), transparent 36%),
+          #fff8ee;
+        z-index: 0;
+      }
+      .dot-grid {
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        background-image: radial-gradient(rgba(12, 14, 15, 0.13) 1.4px, transparent 1.4px);
+        background-size: 28px 28px;
+        pointer-events: none;
+      }
+      .audio-glow {
+        position: absolute;
+        width: 920px;
+        height: 920px;
+        right: -180px;
+        top: -220px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(251, 201, 62, 0.38), rgba(251, 201, 62, 0) 68%);
+        filter: blur(24px);
+        z-index: 0;
+        opacity: 0.28;
+      }
+      .tape-strip {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 14px;
+        z-index: 120;
+        background: repeating-linear-gradient(45deg, #0c0e0f 0 16px, #ffe23a 16px 32px);
+      }
+
+      .topbar {
+        position: absolute;
+        top: 34px;
+        left: 50%;
+        margin-left: -780px;
+        width: 1560px;
+        height: 82px;
+        z-index: 110;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 30px;
+        background: #0c0e0f;
+        border: 4px solid #0c0e0f;
+        border-radius: 44px;
+        box-shadow: 8px 8px 0 rgba(12, 14, 15, 0.22);
+        color: #fff8ee;
+      }
+      .brand-lockup {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+      .brand-mark {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: radial-gradient(circle at 34% 30%, #fff2b6, #fbc93e 58%, #e3a90f);
+        color: #0c0e0f;
+        display: grid;
+        place-items: center;
+        font-family: 'Bangers', sans-serif;
+        font-size: 32px;
+        border: 3px solid #fff8ee;
+        box-shadow: 0 0 0 4px #0c0e0f;
+      }
+      .brand-copy {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+      }
+      .brand-copy .mono {
+        font-family: 'Space Mono', monospace;
+        font-size: 12px;
+        letter-spacing: 0.14em;
+        color: #fbc93e;
+      }
+      .brand-copy .name {
+        font-family: 'Bangers', sans-serif;
+        font-size: 30px;
+        line-height: 0.9;
+        letter-spacing: 0.05em;
+        color: #fff8ee;
+      }
+      .nav-links {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .nav-pill {
+        font-family: 'Titan One', sans-serif;
+        font-size: 17px;
+        letter-spacing: 0.05em;
+        padding: 11px 20px;
+        border-radius: 999px;
+        color: #fff8ee;
+      }
+      .nav-pill.active {
+        background: #ffe23a;
+        color: #0c0e0f;
+        box-shadow: 3px 3px 0 #4a3c00;
+      }
+      .nav-right {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+      }
+      .projector {
+        font-family: 'Titan One', sans-serif;
+        font-size: 15px;
+        letter-spacing: 0.06em;
+        border: 3px solid #fff8ee;
+        border-radius: 999px;
+        padding: 9px 18px;
+        color: #fff8ee;
+      }
+      .live-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #22ac5f;
+        box-shadow: 0 0 12px #22ac5f;
+      }
+      .nav-status {
+        font-family: 'Space Mono', monospace;
+        font-size: 13px;
+        letter-spacing: 0.12em;
+        color: #d9f5c8;
+      }
+
+      .scene {
+        position: absolute;
+        inset: 0;
+        z-index: 10;
+      }
+      .scene-inner {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        padding: 152px 108px 68px;
+      }
+
+      .eyebrow-chip {
+        display: inline-flex;
+        align-items: center;
+        align-self: flex-start;
+        gap: 10px;
+        font-family: 'Titan One', sans-serif;
+        font-size: 17px;
+        letter-spacing: 0.08em;
+        color: #0c0e0f;
+        background: #fff8ee;
+        border: 3px solid #0c0e0f;
+        border-radius: 999px;
+        padding: 10px 20px;
+        box-shadow: 4px 4px 0 #0c0e0f;
+        text-transform: uppercase;
+      }
+      .eyebrow-chip .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #ef4225;
+      }
+      .section-title {
+        font-family: 'Bangers', sans-serif;
+        font-weight: 400;
+        font-size: 94px;
+        line-height: 0.92;
+        letter-spacing: 0.015em;
+        color: #0c0e0f;
+        text-shadow: 5px 5px 0 rgba(251, 201, 62, 0.9);
+      }
+      .mono {
+        font-family: 'Space Mono', monospace;
+      }
+
+      /* ---------- Scene 1 ---------- */
+      .s1 {
+        justify-content: center;
+        padding-top: 148px;
+      }
+      .s1-grid {
+        display: flex;
+        align-items: center;
+        gap: 74px;
+      }
+      .s1-copy {
+        flex: 1 1 52%;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 26px;
+      }
+      .hook {
+        font-family: 'Bangers', sans-serif;
+        font-weight: 400;
+        font-size: 156px;
+        line-height: 0.8;
+        letter-spacing: 0.005em;
+        color: #0c0e0f;
+        text-shadow: 7px 7px 0 #fbc93e;
+        margin-top: 4px;
+      }
+      .hook-line {
+        display: block;
+      }
+      .s1-sub {
+        max-width: 690px;
+        font-size: 31px;
+        line-height: 1.28;
+        font-weight: 500;
+        color: rgba(12, 14, 15, 0.78);
+      }
+      .s1-card {
+        position: relative;
+        flex: 1 1 48%;
+        background: #fbc93e;
+        border: 4px solid #0c0e0f;
+        border-radius: 30px;
+        padding: 34px 34px 26px;
+        box-shadow: 13px 13px 0 #0c0e0f;
+      }
+      .card-label {
+        font-family: 'Titan One', sans-serif;
+        font-size: 18px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        margin-bottom: 16px;
+      }
+      .fake-input {
+        background: #fff8ee;
+        border: 3px solid #0c0e0f;
+        border-radius: 14px;
+        padding: 20px 22px;
+        font-size: 28px;
+        font-weight: 500;
+        margin-bottom: 18px;
+        box-shadow: inset 0 -5px 0 rgba(12, 14, 15, 0.07);
+      }
+      .start-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 34px;
+        background: #0c0e0f;
+        color: #fff8ee;
+        font-family: 'Titan One', sans-serif;
+        font-size: 26px;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        border-radius: 999px;
+        padding: 18px 28px;
+        border: 3px solid #0c0e0f;
+        box-shadow: 5px 5px 0 rgba(12, 14, 15, 0.28);
+      }
+      .start-btn .arrow {
+        color: #ffe23a;
+        font-size: 32px;
+        line-height: 0.7;
+      }
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+        margin-top: 22px;
+        font-family: 'Space Mono', monospace;
+        font-size: 14px;
+      }
+      .chips .chip-label {
+        letter-spacing: 0.12em;
+        opacity: 0.68;
+      }
+      .chips .chip {
+        border: 2px solid #0c0e0f;
+        border-radius: 999px;
+        padding: 7px 13px;
+        background: #fff8ee;
+      }
+      .command-meta {
+        display: flex;
+        justify-content: space-between;
+        gap: 20px;
+        margin-top: 24px;
+        padding-top: 17px;
+        border-top: 3px dashed rgba(12, 14, 15, 0.28);
+        font-family: 'Space Mono', monospace;
+        font-size: 13px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .cursor {
+        position: absolute;
+        width: 46px;
+        height: 46px;
+        left: 322px;
+        top: 168px;
+        z-index: 8;
+        filter: drop-shadow(2px 3px 0 rgba(12, 14, 15, 0.32));
+      }
+
+      /* ---------- Panels ---------- */
+      .panel {
+        position: relative;
+        background: #fff8ee;
+        border: 3px solid #0c0e0f;
+        border-radius: 22px;
+        box-shadow: 7px 7px 0 #0c0e0f;
+      }
+      .panel-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 22px 26px 14px;
+      }
+      .panel-head .kicker {
+        font-family: 'Space Mono', monospace;
+        font-size: 13px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: rgba(12, 14, 15, 0.62);
+      }
+      .panel-head .panel-title {
+        font-family: 'Bangers', sans-serif;
+        font-size: 42px;
+        line-height: 0.9;
+        letter-spacing: 0.02em;
+      }
+      .panel-tag {
+        font-family: 'Titan One', sans-serif;
+        font-size: 14px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        border: 2px solid #0c0e0f;
+        border-radius: 999px;
+        padding: 6px 12px;
+        background: #22ac5f;
+        color: #0c0e0f;
+        white-space: nowrap;
+      }
+      .panel-tag.yellow {
+        background: #ffe23a;
+        color: #0c0e0f;
+      }
+
+      /* ---------- Scene 2 ---------- */
+      .s2-head {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 30px;
+        margin-bottom: 24px;
+      }
+      .s2-head-left {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      .s2-head .section-title {
+        font-size: 86px;
+      }
+      .status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-family: 'Titan One', sans-serif;
+        font-size: 16px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        border: 3px solid #0c0e0f;
+        border-radius: 999px;
+        padding: 10px 18px;
+        background: #fff8ee;
+        box-shadow: 4px 4px 0 #0c0e0f;
+        margin-bottom: 8px;
+      }
+      .s2-grid {
+        flex: 1;
+        display: grid;
+        grid-template-columns: 1.55fr 1fr;
+        gap: 24px;
+        min-height: 0;
+      }
+      .run-panel {
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      .pipeline-wrap {
+        position: relative;
+        flex: 1;
+        padding: 10px 30px 18px;
+        display: flex;
+        align-items: center;
+      }
+      .pipeline-line {
+        position: absolute;
+        left: 52px;
+        right: 52px;
+        top: 50%;
+        height: 90px;
+        margin-top: -55px;
+        z-index: 0;
+      }
+      .pipeline {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        width: 100%;
+      }
+      .node {
+        width: 132px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+      }
+      .node-dot {
+        width: 78px;
+        height: 78px;
+        border-radius: 50%;
+        border: 4px solid #0c0e0f;
+        background: #fff8ee;
+        display: grid;
+        place-items: center;
+        font-family: 'Bangers', sans-serif;
+        font-size: 30px;
+        box-shadow: 4px 5px 0 #0c0e0f;
+      }
+      .node-label {
+        font-family: 'Titan One', sans-serif;
+        font-size: 14px;
+        letter-spacing: 0.05em;
+        text-align: center;
+        background: #fff8ee;
+        border: 2px solid #0c0e0f;
+        border-radius: 999px;
+        padding: 3px 9px;
+        white-space: nowrap;
+      }
+      .source-list {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+        padding: 0 26px 16px;
+      }
+      .source-list li {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        border-bottom: 2px dashed rgba(12, 14, 15, 0.16);
+        padding: 6px 2px 8px;
+        font-family: 'Space Mono', monospace;
+        font-size: 14px;
+        letter-spacing: 0.03em;
+      }
+      .source-list .ok {
+        display: grid;
+        place-items: center;
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        background: #22ac5f;
+        color: #0c0e0f;
+        font-weight: 700;
+        flex: 0 0 auto;
+      }
+      .source-list .bytes {
+        margin-left: auto;
+        color: rgba(12, 14, 15, 0.58);
+        font-size: 12px;
+      }
+      .run-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px 26px;
+        padding: 18px 26px 22px;
+        border-top: 3px dashed rgba(12, 14, 15, 0.24);
+        font-family: 'Space Mono', monospace;
+        font-size: 15px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: rgba(12, 14, 15, 0.78);
+      }
+      .run-meta b {
+        color: #0c0e0f;
+        font-weight: 700;
+      }
+      .control-panel {
+        display: flex;
+        flex-direction: column;
+      }
+      .health-badges {
+        display: flex;
+        gap: 10px;
+        padding: 0 26px 14px;
+      }
+      .health-badge {
+        font-family: 'Titan One', sans-serif;
+        font-size: 12px;
+        letter-spacing: 0.06em;
+        border: 2px solid #0c0e0f;
+        border-radius: 999px;
+        padding: 5px 10px;
+        background: #f2e3d0;
+      }
+      .health-badge.ok {
+        background: #22ac5f;
+        color: #0c0e0f;
+      }
+      .stat-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        border-top: 3px solid #0c0e0f;
+        border-left: 3px solid #0c0e0f;
+        margin: 0 26px;
+        border-radius: 10px;
+        overflow: hidden;
+      }
+      .stat-cell {
+        background: #0c0e0f;
+        color: #fff8ee;
+        border-right: 3px solid #0c0e0f;
+        border-bottom: 3px solid #0c0e0f;
+        padding: 13px 15px;
+      }
+      .stat-cell span {
+        display: block;
+        font-family: 'Space Mono', monospace;
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: rgba(255, 248, 238, 0.62);
+        margin-bottom: 4px;
+      }
+      .stat-cell strong {
+        font-family: 'Bangers', sans-serif;
+        font-weight: 400;
+        font-size: 32px;
+        letter-spacing: 0.02em;
+        line-height: 1;
+        color: #fff8ee;
+      }
+      .control-footer {
+        margin-top: auto;
+        padding: 16px 26px 20px;
+        font-family: 'Space Mono', monospace;
+        font-size: 13px;
+        letter-spacing: 0.06em;
+        color: rgba(12, 14, 15, 0.68);
+        text-transform: uppercase;
+      }
+
+      /* ---------- Scene 3 ---------- */
+      .s3-head {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        margin-bottom: 22px;
+      }
+      .s3-head-left {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      .s3-head .section-title {
+        font-size: 82px;
+      }
+      .s3-grid {
+        flex: 1;
+        display: grid;
+        grid-template-columns: 1.35fr 1fr;
+        gap: 26px;
+        min-height: 0;
+      }
+      .report-card {
+        padding: 28px 32px 24px;
+        display: flex;
+        flex-direction: column;
+      }
+      .report-kicker {
+        font-family: 'Space Mono', monospace;
+        font-size: 13px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: rgba(12, 14, 15, 0.6);
+        border-bottom: 3px dashed rgba(12, 14, 15, 0.2);
+        padding-bottom: 12px;
+        margin-bottom: 18px;
+      }
+      .stat-row {
+        display: flex;
+        align-items: flex-end;
+        gap: 20px;
+      }
+      .big-stat {
+        font-family: 'Bangers', sans-serif;
+        font-size: 186px;
+        line-height: 0.8;
+        letter-spacing: 0.01em;
+        color: #0c0e0f;
+        text-shadow: 6px 6px 0 #fbc93e;
+      }
+      .stat-in {
+        font-family: 'Titan One', sans-serif;
+        font-size: 30px;
+        letter-spacing: 0.06em;
+        padding-bottom: 18px;
+      }
+      .stat-caption {
+        margin-top: 16px;
+        font-size: 31px;
+        font-weight: 500;
+        color: rgba(12, 14, 15, 0.78);
+      }
+      .cagr {
+        margin-top: 12px;
+        font-family: 'Titan One', sans-serif;
+        font-size: 38px;
+        letter-spacing: 0.03em;
+      }
+      .report-line {
+        margin-top: auto;
+        padding-top: 20px;
+        border-top: 3px dashed rgba(12, 14, 15, 0.2);
+        font-size: 25px;
+        line-height: 1.35;
+        color: rgba(12, 14, 15, 0.75);
+      }
+      .cite {
+        display: inline-grid;
+        place-items: center;
+        min-width: 1.7em;
+        height: 1.5em;
+        padding: 0 0.35em;
+        margin-left: 4px;
+        border: 2px solid #ad69ff;
+        border-radius: 999px;
+        background: rgba(173, 105, 255, 0.14);
+        color: #6d23b8;
+        font-family: 'Space Mono', monospace;
+        font-size: 0.72em;
+        font-weight: 700;
+        line-height: 1;
+        vertical-align: 0.08em;
+      }
+      .source-stack {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+      .source-card {
+        display: flex;
+        align-items: flex-start;
+        gap: 16px;
+        background: #fff8ee;
+        border: 3px solid #0c0e0f;
+        border-radius: 18px;
+        padding: 20px 22px;
+        box-shadow: 6px 6px 0 #0c0e0f;
+      }
+      .source-card .cite {
+        flex: 0 0 auto;
+        font-size: 21px;
+        height: 38px;
+        min-width: 54px;
+        margin: 0;
+      }
+      .source-copy {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        min-width: 0;
+      }
+      .source-copy b {
+        font-family: 'Bangers', sans-serif;
+        font-weight: 400;
+        font-size: 27px;
+        line-height: 0.98;
+        letter-spacing: 0.02em;
+      }
+      .source-copy small {
+        font-family: 'Space Mono', monospace;
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        color: rgba(12, 14, 15, 0.6);
+        text-transform: uppercase;
+      }
+      .source-note {
+        margin-top: auto;
+        font-family: 'Space Mono', monospace;
+        font-size: 13px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: rgba(12, 14, 15, 0.62);
+        padding-left: 4px;
+      }
+
+      /* ---------- Scene 4 ---------- */
+      .s4-head {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        margin-bottom: 24px;
+      }
+      .s4-head .section-title {
+        font-size: 78px;
+        max-width: 1500px;
+      }
+      .s4-grid {
+        flex: 1;
+        display: grid;
+        grid-template-columns: 1.1fr 0.95fr;
+        gap: 28px;
+        min-height: 0;
+      }
+      .check-card {
+        padding: 30px 34px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 18px;
+        overflow: hidden;
+      }
+      .check-kicker {
+        font-family: 'Space Mono', monospace;
+        font-size: 13px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: rgba(12, 14, 15, 0.6);
+      }
+      .check-line {
+        font-size: 34px;
+        line-height: 1.35;
+        font-weight: 500;
+        color: #0c0e0f;
+      }
+      .cite-bad {
+        display: inline-grid;
+        place-items: center;
+        min-width: 96px;
+        height: 76px;
+        padding: 0 12px;
+        border: 4px solid #0c0e0f;
+        border-radius: 18px;
+        background: #ffe23a;
+        color: #0c0e0f;
+        font-family: 'Bangers', sans-serif;
+        font-size: 58px;
+        line-height: 1;
+        box-shadow: 5px 5px 0 #0c0e0f;
+        vertical-align: -0.08em;
+      }
+      .stamp {
+        align-self: center;
+        font-family: 'Titan One', sans-serif;
+        font-size: 46px;
+        letter-spacing: 0.08em;
+        color: #fff8ee;
+        background: #ef4225;
+        border: 5px solid #0c0e0f;
+        border-radius: 12px;
+        padding: 12px 26px;
+        box-shadow: 7px 7px 0 #0c0e0f;
+        text-transform: uppercase;
+      }
+      .removed-bar {
+        align-self: stretch;
+        text-align: center;
+        font-family: 'Titan One', sans-serif;
+        font-size: 38px;
+        letter-spacing: 0.1em;
+        color: #fff8ee;
+        background: #0c0e0f;
+        border-radius: 10px;
+        padding: 14px 18px;
+        text-transform: uppercase;
+      }
+      .integrity-card {
+        background: #0c0e0f;
+        color: #fff8ee;
+        border: 4px solid #0c0e0f;
+        border-radius: 26px;
+        box-shadow: 10px 10px 0 rgba(12, 14, 15, 0.28);
+        padding: 34px 36px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 10px;
+        position: relative;
+        overflow: hidden;
+      }
+      .integrity-card::before {
+        content: '';
+        position: absolute;
+        width: 360px;
+        height: 360px;
+        right: -140px;
+        top: -150px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(34, 172, 95, 0.28), transparent 68%);
+      }
+      .integrity-label {
+        font-family: 'Space Mono', monospace;
+        font-size: 15px;
+        letter-spacing: 0.18em;
+        color: #ffe23a;
+        text-transform: uppercase;
+      }
+      .integrity-line {
+        display: flex;
+        align-items: baseline;
+        gap: 14px;
+        font-family: 'Titan One', sans-serif;
+        font-size: 35px;
+        letter-spacing: 0.03em;
+        line-height: 1.12;
+        text-transform: uppercase;
+      }
+      .integrity-line b {
+        font-family: 'Bangers', sans-serif;
+        font-weight: 400;
+        font-size: 76px;
+        line-height: 0.8;
+      }
+      .integrity-line .good {
+        color: #47e08b;
+      }
+      .integrity-line .bad {
+        color: #ff6b5b;
+      }
+      .integrity-meta {
+        margin-top: 12px;
+        padding-top: 16px;
+        border-top: 2px dashed rgba(255, 248, 238, 0.32);
+        font-family: 'Space Mono', monospace;
+        font-size: 14px;
+        letter-spacing: 0.06em;
+        line-height: 1.7;
+        color: rgba(255, 248, 238, 0.72);
+        text-transform: uppercase;
+      }
+      .integrity-meta b {
+        color: #fff8ee;
+      }
+      .mock-pill {
+        align-self: flex-start;
+        font-family: 'Titan One', sans-serif;
+        font-size: 13px;
+        letter-spacing: 0.08em;
+        border: 2px solid #47e08b;
+        color: #47e08b;
+        border-radius: 999px;
+        padding: 5px 11px;
+        margin-top: 4px;
+      }
+
+      /* ---------- Scene 5 ---------- */
+      .s5 {
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding-top: 120px;
+      }
+      .logos {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        position: relative;
+      }
+      .logo-mark-big {
+        width: 176px;
+        height: 176px;
+        border-radius: 50%;
+        background: radial-gradient(circle at 34% 28%, #fff3bd, #fbc93e 56%, #dca80e);
+        border: 6px solid #0c0e0f;
+        box-shadow: 0 0 0 12px #fff8ee, 0 0 0 17px #0c0e0f, 0 0 80px rgba(251, 201, 62, 0.55);
+        display: grid;
+        place-items: center;
+        font-family: 'Bangers', sans-serif;
+        font-size: 104px;
+        color: #0c0e0f;
+        position: relative;
+      }
+      .logo-mark-big::after {
+        content: '';
+        position: absolute;
+        inset: -26px;
+        border-radius: 50%;
+        border: 3px dashed #0c0e0f;
+        opacity: 0.32;
+      }
+      .brand-big {
+        font-family: 'Bangers', sans-serif;
+        font-weight: 400;
+        font-size: 214px;
+        line-height: 0.82;
+        letter-spacing: 0.02em;
+        color: #0c0e0f;
+        text-shadow: 9px 9px 0 #fbc93e;
+        margin-top: 26px;
+      }
+      .brand-tag {
+        margin-top: 20px;
+        font-family: 'Titan One', sans-serif;
+        font-size: 42px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        background: #0c0e0f;
+        color: #fff8ee;
+        border-radius: 999px;
+        padding: 14px 32px;
+        box-shadow: 6px 6px 0 #fbc93e;
+      }
+      .brand-footer {
+        margin-top: 30px;
+        font-family: 'Space Mono', monospace;
+        font-size: 18px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: rgba(12, 14, 15, 0.68);
+      }
+      .final-stamp {
+        margin-top: 24px;
+        font-family: 'Titan One', sans-serif;
+        font-size: 20px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        border: 3px solid #0c0e0f;
+        border-radius: 10px;
+        padding: 10px 18px;
+        color: #0c0e0f;
+        background: #ffe23a;
+        box-shadow: 4px 4px 0 #0c0e0f;
+      }
+
+      /* ---------- Feature scenes 5-10 ---------- */
+      .feature-head {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 26px;
+        margin-bottom: 22px;
+      }
+      .feature-head-left {
+        display: flex;
+        flex-direction: column;
+        gap: 13px;
+      }
+      .feature-head .section-title {
+        font-size: 76px;
+        max-width: 1400px;
+      }
+      .feature-grid {
+        flex: 1;
+        display: grid;
+        grid-template-columns: 1.16fr 0.94fr;
+        gap: 26px;
+        min-height: 0;
+      }
+
+      /* Scene 5 — research rounds */
+      .audit-panel {
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      .audit-body {
+        display: flex;
+        flex-direction: column;
+        padding: 2px 30px 16px;
+      }
+      .audit-row {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        padding: 13px 0;
+        border-bottom: 2px dashed rgba(12, 14, 15, 0.16);
+        font-size: 22px;
+        font-weight: 500;
+      }
+      .audit-row .check {
+        width: 34px;
+        height: 34px;
+        flex: 0 0 auto;
+        border-radius: 50%;
+        border: 3px solid #0c0e0f;
+        background: #22ac5f;
+        display: grid;
+        place-items: center;
+        font-size: 17px;
+        font-weight: 700;
+      }
+      .audit-row.gap {
+        background: rgba(239, 66, 37, 0.09);
+        margin: 0 -30px;
+        padding: 13px 30px;
+        border-bottom-color: rgba(239, 66, 37, 0.3);
+      }
+      .audit-row.gap .check {
+        background: #ef4225;
+        color: #fff8ee;
+      }
+      .audit-status {
+        margin-left: auto;
+        font-family: 'Titan One', sans-serif;
+        font-size: 12px;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+        border: 2px solid #0c0e0f;
+        border-radius: 999px;
+        padding: 5px 10px;
+        background: #fff8ee;
+      }
+      .audit-status.gap {
+        background: #ef4225;
+        color: #fff8ee;
+      }
+      .audit-note {
+        margin-top: auto;
+        padding-top: 14px;
+        font-family: 'Space Mono', monospace;
+        font-size: 13px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: rgba(12, 14, 15, 0.64);
+      }
+      .round-card {
+        background: #0c0e0f;
+        color: #fff8ee;
+        border: 4px solid #0c0e0f;
+        border-radius: 26px;
+        box-shadow: 10px 10px 0 rgba(12, 14, 15, 0.28);
+        padding: 30px 34px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        position: relative;
+        overflow: hidden;
+      }
+      .round-card::before {
+        content: '';
+        position: absolute;
+        width: 340px;
+        height: 340px;
+        right: -130px;
+        top: -140px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(251, 201, 62, 0.3), transparent 68%);
+      }
+      .round-badge {
+        align-self: flex-start;
+        font-family: 'Titan One', sans-serif;
+        font-size: 14px;
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+        border: 2px solid #ffe23a;
+        color: #ffe23a;
+        border-radius: 999px;
+        padding: 6px 12px;
+      }
+      .round-stage {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        font-family: 'Titan One', sans-serif;
+        font-size: 24px;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+      }
+      .round-stage .dot {
+        width: 30px;
+        height: 30px;
+        flex: 0 0 auto;
+        border-radius: 50%;
+        border: 3px solid #fff8ee;
+        display: grid;
+        place-items: center;
+        font-family: 'Space Mono', monospace;
+        font-size: 12px;
+      }
+      .round-stage.done .dot {
+        background: #22ac5f;
+        border-color: #22ac5f;
+        color: #0c0e0f;
+      }
+      .round-stage.active .dot {
+        background: #ffe23a;
+        border-color: #ffe23a;
+        color: #0c0e0f;
+      }
+      .round-stage.active {
+        color: #ffe23a;
+      }
+      .round-meta {
+        margin-top: auto;
+        padding-top: 16px;
+        border-top: 2px dashed rgba(255, 248, 238, 0.3);
+        font-family: 'Space Mono', monospace;
+        font-size: 13px;
+        letter-spacing: 0.07em;
+        line-height: 1.8;
+        text-transform: uppercase;
+        color: rgba(255, 248, 238, 0.72);
+      }
+      .round-meta b {
+        color: #fff8ee;
+      }
+
+      /* Scene 6 — follow-up chat */
+      .chat-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 13px;
+        padding: 24px 30px;
+      }
+      .chat-kicker {
+        font-family: 'Space Mono', monospace;
+        font-size: 12px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: rgba(12, 14, 15, 0.6);
+      }
+      .chat-bubble {
+        max-width: 88%;
+        border: 3px solid #0c0e0f;
+        border-radius: 18px;
+        padding: 15px 20px;
+        font-size: 22px;
+        line-height: 1.34;
+        font-weight: 500;
+        box-shadow: 5px 5px 0 #0c0e0f;
+      }
+      .chat-bubble.user {
+        align-self: flex-end;
+        background: #ffe23a;
+        border-bottom-right-radius: 4px;
+      }
+      .chat-bubble.bot {
+        align-self: flex-start;
+        background: #fff8ee;
+        border-bottom-left-radius: 4px;
+      }
+      .chat-bubble small {
+        display: block;
+        margin-top: 9px;
+        font-family: 'Space Mono', monospace;
+        font-size: 12px;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+        color: rgba(12, 14, 15, 0.6);
+      }
+      .chat-input {
+        margin-top: auto;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        border-top: 3px dashed rgba(12, 14, 15, 0.2);
+        padding-top: 15px;
+      }
+      .chat-field {
+        flex: 1;
+        background: #fff8ee;
+        border: 3px solid #0c0e0f;
+        border-radius: 999px;
+        padding: 13px 20px;
+        font-family: 'Space Mono', monospace;
+        font-size: 15px;
+        color: rgba(12, 14, 15, 0.55);
+      }
+      .chat-send {
+        font-family: 'Titan One', sans-serif;
+        font-size: 15px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        background: #0c0e0f;
+        color: #fff8ee;
+        border: 3px solid #0c0e0f;
+        border-radius: 999px;
+        padding: 12px 20px;
+        box-shadow: 4px 4px 0 rgba(12, 14, 15, 0.25);
+      }
+      .registry-card {
+        background: #0c0e0f;
+        color: #fff8ee;
+        border: 4px solid #0c0e0f;
+        border-radius: 26px;
+        box-shadow: 10px 10px 0 rgba(12, 14, 15, 0.28);
+        padding: 30px 34px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      .registry-label {
+        font-family: 'Space Mono', monospace;
+        font-size: 13px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: #ffe23a;
+      }
+      .registry-title {
+        font-family: 'Bangers', sans-serif;
+        font-size: 46px;
+        line-height: 0.92;
+      }
+      .registry-row {
+        display: flex;
+        gap: 13px;
+        align-items: flex-start;
+        padding: 12px 0;
+        border-bottom: 2px dashed rgba(255, 248, 238, 0.24);
+        font-size: 18px;
+        line-height: 1.3;
+      }
+      .registry-row .cite {
+        font-size: 16px;
+        height: 30px;
+        min-width: 42px;
+        margin: 0;
+        border-color: #ffe23a;
+        background: rgba(255, 226, 58, 0.16);
+        color: #ffe23a;
+      }
+      .registry-row b {
+        display: block;
+        font-family: 'Bangers', sans-serif;
+        font-weight: 400;
+        font-size: 25px;
+        letter-spacing: 0.02em;
+      }
+      .registry-row small {
+        font-family: 'Space Mono', monospace;
+        font-size: 11px;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+        color: rgba(255, 248, 238, 0.6);
+      }
+      .registry-note {
+        margin-top: auto;
+        font-family: 'Space Mono', monospace;
+        font-size: 13px;
+        letter-spacing: 0.08em;
+        line-height: 1.7;
+        text-transform: uppercase;
+        color: rgba(255, 248, 238, 0.72);
+      }
+      .registry-note b {
+        color: #47e08b;
+      }
+
+      /* Scene 7 — compare runs */
+      .diff-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        padding: 24px 30px;
+      }
+      .diff-toolbar {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .diff-label {
+        font-family: 'Space Mono', monospace;
+        font-size: 12px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: rgba(12, 14, 15, 0.6);
+      }
+      .diff-select {
+        flex: 1;
+        background: #fff8ee;
+        border: 3px solid #0c0e0f;
+        border-radius: 12px;
+        padding: 12px 16px;
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 20px;
+        font-weight: 500;
+      }
+      .diff-button {
+        font-family: 'Titan One', sans-serif;
+        font-size: 14px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        background: #0c0e0f;
+        color: #fff8ee;
+        border: 3px solid #0c0e0f;
+        border-radius: 999px;
+        padding: 12px 20px;
+        box-shadow: 4px 4px 0 rgba(12, 14, 15, 0.25);
+        white-space: nowrap;
+      }
+      .diff-summary {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-family: 'Titan One', sans-serif;
+        font-size: 17px;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        background: #f2e3d0;
+        border: 2px solid #0c0e0f;
+        border-radius: 10px;
+        padding: 11px 16px;
+      }
+      .diff-summary b {
+        font-family: 'Bangers', sans-serif;
+        font-weight: 400;
+        font-size: 26px;
+        letter-spacing: 0.03em;
+      }
+      .diff-list {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 0;
+      }
+      .diff-row {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 12px 0;
+        border-bottom: 2px dashed rgba(12, 14, 15, 0.16);
+      }
+      .diff-row b {
+        font-family: 'Bangers', sans-serif;
+        font-weight: 400;
+        font-size: 29px;
+        letter-spacing: 0.02em;
+        line-height: 1;
+      }
+      .diff-tag {
+        margin-left: auto;
+        font-family: 'Titan One', sans-serif;
+        font-size: 12px;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+        border: 2px solid #0c0e0f;
+        border-radius: 999px;
+        padding: 5px 11px;
+      }
+      .diff-tag.changed {
+        background: #2a5fc4;
+        color: #fff8ee;
+      }
+      .diff-tag.added {
+        background: #22ac5f;
+        color: #0c0e0f;
+      }
+      .diff-tag.removed {
+        background: #ef4225;
+        color: #fff8ee;
+      }
+      .diff-source {
+        margin-top: auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        border-top: 3px dashed rgba(12, 14, 15, 0.2);
+        padding-top: 16px;
+        font-family: 'Space Mono', monospace;
+        font-size: 13px;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+        color: rgba(12, 14, 15, 0.64);
+      }
+      .diff-source b {
+        color: #0c0e0f;
+      }
+      .version-card {
+        background: #fbc93e;
+        border: 4px solid #0c0e0f;
+        border-radius: 24px;
+        box-shadow: 9px 9px 0 #0c0e0f;
+        padding: 26px 30px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .version-label {
+        font-family: 'Space Mono', monospace;
+        font-size: 12px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: rgba(12, 14, 15, 0.62);
+      }
+      .version-title {
+        font-family: 'Bangers', sans-serif;
+        font-size: 42px;
+        line-height: 0.92;
+      }
+      .version-arrow {
+        font-family: 'Titan One', sans-serif;
+        font-size: 40px;
+        line-height: 0.8;
+      }
+      .version-count {
+        display: flex;
+        align-items: baseline;
+        gap: 12px;
+        font-family: 'Bangers', sans-serif;
+        font-size: 88px;
+        line-height: 0.8;
+      }
+      .version-count small {
+        font-family: 'Space Mono', monospace;
+        font-size: 13px;
+        letter-spacing: 0.08em;
+        color: rgba(12, 14, 15, 0.64);
+      }
+      .version-panel {
+        background: #fff8ee;
+        border: 3px solid #0c0e0f;
+        border-radius: 26px;
+        box-shadow: 9px 9px 0 #0c0e0f;
+        padding: 26px 30px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .version-panel .version-title {
+        margin-bottom: 4px;
+      }
+      .version-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 14px;
+        padding: 11px 0;
+        border-bottom: 2px dashed rgba(12, 14, 15, 0.16);
+        font-family: 'Space Mono', monospace;
+        font-size: 13px;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+      }
+      .version-row b {
+        color: #0c0e0f;
+      }
+
+      /* Scene 8 — schedules */
+      .schedule-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 17px;
+        padding: 26px 30px;
+      }
+      .sched-kicker {
+        font-family: 'Space Mono', monospace;
+        font-size: 12px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: rgba(12, 14, 15, 0.6);
+      }
+      .sched-title {
+        font-family: 'Bangers', sans-serif;
+        font-size: 46px;
+        line-height: 0.92;
+      }
+      .sched-input {
+        background: #fff8ee;
+        border: 3px solid #0c0e0f;
+        border-radius: 14px;
+        padding: 15px 18px;
+        font-size: 23px;
+        font-weight: 500;
+        box-shadow: inset 0 -5px 0 rgba(12, 14, 15, 0.07);
+      }
+      .sched-controls {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .freq-chip {
+        font-family: 'Space Mono', monospace;
+        font-size: 12px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        border: 2px solid #0c0e0f;
+        border-radius: 999px;
+        padding: 8px 13px;
+        background: #fff8ee;
+      }
+      .freq-chip.active {
+        background: #ffe23a;
+        box-shadow: 3px 3px 0 #0c0e0f;
+      }
+      .sched-btn {
+        margin-left: auto;
+        font-family: 'Titan One', sans-serif;
+        font-size: 15px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        background: #0c0e0f;
+        color: #fff8ee;
+        border: 3px solid #0c0e0f;
+        border-radius: 999px;
+        padding: 12px 22px;
+        box-shadow: 4px 4px 0 rgba(12, 14, 15, 0.25);
+      }
+      .sched-note {
+        font-family: 'Space Mono', monospace;
+        font-size: 12px;
+        letter-spacing: 0.06em;
+        line-height: 1.6;
+        text-transform: uppercase;
+        color: rgba(12, 14, 15, 0.6);
+      }
+      .sched-foot {
+        margin-top: auto;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px 26px;
+        border-top: 3px dashed rgba(12, 14, 15, 0.2);
+        padding-top: 15px;
+        font-family: 'Space Mono', monospace;
+        font-size: 12px;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+        color: rgba(12, 14, 15, 0.62);
+      }
+      .sched-foot b {
+        color: #0c0e0f;
+      }
+      .sched-card {
+        background: #0c0e0f;
+        color: #fff8ee;
+        border: 4px solid #0c0e0f;
+        border-radius: 26px;
+        box-shadow: 10px 10px 0 rgba(12, 14, 15, 0.28);
+        padding: 26px 30px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .sched-card .sched-kicker {
+        color: #ffe23a;
+      }
+      .sched-card .sched-title {
+        font-size: 40px;
+      }
+      .sched-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 13px 0;
+        border-bottom: 2px dashed rgba(255, 248, 238, 0.24);
+      }
+      .sched-item .clock {
+        width: 44px;
+        height: 44px;
+        flex: 0 0 auto;
+        border-radius: 50%;
+        border: 2px solid #ffe23a;
+        color: #ffe23a;
+        display: grid;
+        place-items: center;
+        font-family: 'Titan One', sans-serif;
+        font-size: 12px;
+      }
+      .sched-item .what {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .sched-item b {
+        font-family: 'Bangers', sans-serif;
+        font-weight: 400;
+        font-size: 25px;
+        letter-spacing: 0.02em;
+      }
+      .sched-item small {
+        font-family: 'Space Mono', monospace;
+        font-size: 11px;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+        color: rgba(255, 248, 238, 0.6);
+      }
+      .sched-item .state {
+        margin-left: auto;
+        font-family: 'Titan One', sans-serif;
+        font-size: 11px;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+        border: 2px solid #47e08b;
+        color: #47e08b;
+        border-radius: 999px;
+        padding: 4px 9px;
+      }
+      .sched-item .state.off {
+        border-color: rgba(255, 248, 238, 0.4);
+        color: rgba(255, 248, 238, 0.55);
+      }
+
+      /* Scene 9 — exports */
+      .export-wrap {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        min-height: 0;
+      }
+      .export-grid {
+        flex: 1;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        grid-template-rows: repeat(3, 1fr);
+        gap: 15px;
+      }
+      .format-tile {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        background: #fff8ee;
+        border: 3px solid #0c0e0f;
+        border-radius: 18px;
+        padding: 16px 20px;
+        box-shadow: 5px 5px 0 #0c0e0f;
+      }
+      .format-tile.hero {
+        background: #fbc93e;
+      }
+      .format-tile .f-label {
+        font-family: 'Bangers', sans-serif;
+        font-size: 42px;
+        line-height: 0.9;
+        letter-spacing: 0.02em;
+      }
+      .format-tile .f-ext {
+        font-family: 'Space Mono', monospace;
+        font-size: 12px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: rgba(12, 14, 15, 0.62);
+      }
+      .format-tile .f-arrow {
+        position: absolute;
+        right: 18px;
+        bottom: 12px;
+        font-family: 'Titan One', sans-serif;
+        font-size: 26px;
+        line-height: 1;
+      }
+      .format-tile.hero .f-arrow {
+        font-size: 38px;
+      }
+      .format-tile .f-badge {
+        position: absolute;
+        top: 14px;
+        right: 14px;
+        font-family: 'Titan One', sans-serif;
+        font-size: 10px;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+        border: 2px solid #0c0e0f;
+        border-radius: 999px;
+        padding: 3px 8px;
+        background: #0c0e0f;
+        color: #fff8ee;
+      }
+      .export-ticker {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 9px 16px;
+        border-top: 3px dashed rgba(12, 14, 15, 0.2);
+        padding-top: 14px;
+        font-family: 'Space Mono', monospace;
+        font-size: 13px;
+        letter-spacing: 0.04em;
+        color: rgba(12, 14, 15, 0.62);
+      }
+      .export-ticker b {
+        color: #0c0e0f;
+      }
+
+      /* Scene 10 — notifications */
+      .notify-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 13px;
+        padding: 26px 30px;
+      }
+      .notification {
+        display: flex;
+        align-items: flex-start;
+        gap: 15px;
+        border: 3px solid #0c0e0f;
+        border-radius: 16px;
+        padding: 15px 18px;
+        background: #fff8ee;
+        box-shadow: 4px 4px 0 #0c0e0f;
+      }
+      .notification.unread {
+        background: #fff3cd;
+      }
+      .notification .bell {
+        width: 48px;
+        height: 48px;
+        flex: 0 0 auto;
+        border-radius: 50%;
+        background: #0c0e0f;
+        color: #ffe23a;
+        display: grid;
+        place-items: center;
+        font-family: 'Bangers', sans-serif;
+        font-size: 24px;
+      }
+      .notification .notify-copy {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+        min-width: 0;
+      }
+      .notification b {
+        font-family: 'Bangers', sans-serif;
+        font-weight: 400;
+        font-size: 27px;
+        line-height: 1;
+        letter-spacing: 0.02em;
+      }
+      .notification small {
+        font-family: 'Space Mono', monospace;
+        font-size: 12px;
+        letter-spacing: 0.04em;
+        color: rgba(12, 14, 15, 0.64);
+      }
+      .notification .unread-dot {
+        margin-left: auto;
+        width: 11px;
+        height: 11px;
+        flex: 0 0 auto;
+        border-radius: 50%;
+        background: #ef4225;
+      }
+      .channel-card {
+        background: #0c0e0f;
+        color: #fff8ee;
+        border: 4px solid #0c0e0f;
+        border-radius: 26px;
+        box-shadow: 10px 10px 0 rgba(12, 14, 15, 0.28);
+        padding: 30px 34px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+
+      /* Scene 11 — recap strip */
+      .recap-strip {
+        margin-top: 24px;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px 14px;
+        font-family: 'Space Mono', monospace;
+        font-size: 13px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: rgba(12, 14, 15, 0.62);
+      }
+      .recap-strip b {
+        color: #0c0e0f;
+        font-weight: 700;
+      }
+      .recap-strip .sep {
+        color: #c72f16;
+        font-weight: 700;
+      }
+
+      /* ---------- Scene transitions ---------- */
+      .wipe {
+        position: absolute;
+        inset: -20%;
+        z-index: 90;
+        transform-origin: center;
+      }
+      .wipe-yellow {
+        background: #fbc93e;
+        border-right: 6px solid #0c0e0f;
+      }
+      .wipe-paper {
+        background: #fff8ee;
+        border-right: 6px solid #0c0e0f;
+        background-image: radial-gradient(rgba(12, 14, 15, 0.13) 1.4px, transparent 1.4px);
+        background-size: 28px 28px;
+      }
+      .wipe-ink {
+        background: #0c0e0f;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="60" data-width="1920" data-height="1080">
+      <div class="paper-fill"></div>
+      <div class="dot-grid"></div>
+      <div class="audio-glow" id="audio-glow"></div>
+      <div class="tape-strip"></div>
+
+      <div class="topbar" id="topbar">
+        <div class="brand-lockup">
+          <div class="brand-mark">R</div>
+          <div class="brand-copy">
+            <span class="mono">OMNIRUSH / RESEARCH AGENT</span>
+            <span class="name">OMNIRUSH</span>
+          </div>
+        </div>
+        <div class="nav-links">
+          <div class="nav-pill active">MISSION CONTROL</div>
+          <div class="nav-pill">REPORT WORKSPACE</div>
+          <div class="nav-pill">SOURCE INTELLIGENCE</div>
+        </div>
+        <div class="nav-right">
+          <div class="projector">PROJECTOR MODE</div>
+          <div class="live-dot"></div>
+          <div class="nav-status">SYSTEM READY</div>
+        </div>
+      </div>
+
+      <!-- SCENE 1 -->
+      <div class="clip scene" id="scene1" data-start="0" data-duration="3.2" data-track-index="1">
+        <div class="scene-inner s1">
+          <div class="s1-grid">
+            <div class="s1-copy">
+              <div class="eyebrow-chip" id="s1-eyebrow"><span class="dot"></span>COMMAND DECK / READY FOR INPUT</div>
+              <h1 class="hook">
+                <span class="hook-line" id="hook-1">ASK THE</span>
+                <span class="hook-line" id="hook-2">SYSTEM</span>
+                <span class="hook-line" id="hook-3">ANYTHING.</span>
+              </h1>
+              <p class="s1-sub" id="s1-sub">Launch a citation-backed research operation.</p>
+            </div>
+            <div class="s1-card" id="s1-card">
+              <div class="card-label">WHAT SHOULD WE RESEARCH?</div>
+              <div class="fake-input" id="s1-input">Quantum computing 2026</div>
+              <div class="start-btn" id="start-btn"><span>Start research</span><span class="arrow">→</span></div>
+              <div class="chips">
+                <span class="chip-label">TRY AN EXAMPLE</span>
+                <span class="chip">Quantum computing 2026</span>
+                <span class="chip">AI agent reliability</span>
+              </div>
+              <div class="command-meta"><span>NO ACTIVE RUN</span><span>ONE CLICK TO BEGIN</span></div>
+              <svg class="cursor" id="cursor" viewBox="0 0 40 48" aria-hidden="true">
+                <path d="M4 3 L34 24 L20 27 L14 43 Z" fill="#0c0e0f" stroke="#fff8ee" stroke-width="3" stroke-linejoin="round" />
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SCENE 2 -->
+      <div class="clip scene" id="scene2" data-start="3.2" data-duration="4.0" data-track-index="2">
+        <div class="scene-inner s2">
+          <div class="s2-head">
+            <div class="s2-head-left">
+              <div class="eyebrow-chip"><span class="dot"></span>ACTIVE OPERATION / LIVE RUN DECK</div>
+              <h2 class="section-title" id="s2-title">WATCH EVERY STAGE.</h2>
+            </div>
+            <div class="status-pill" id="s2-status"><span class="live-dot"></span>REPORT READY</div>
+          </div>
+          <div class="s2-grid">
+            <div class="panel run-panel" id="run-panel">
+              <div class="panel-head">
+                <div>
+                  <div class="kicker">ACTIVE OPERATION</div>
+                  <div class="panel-title">Live run deck</div>
+                </div>
+                <div class="panel-tag">DONE</div>
+              </div>
+              <div class="pipeline-wrap">
+                <svg class="pipeline-line" viewBox="0 0 1000 100" preserveAspectRatio="none" aria-hidden="true">
+                  <path d="M 20 52 C 90 12, 150 88, 220 52 C 290 12, 350 88, 420 52 C 490 12, 550 88, 620 52 C 690 12, 750 88, 820 52 C 890 12, 950 88, 985 52" fill="none" stroke="#0c0e0f" stroke-width="7" stroke-linecap="round" />
+                  <path d="M 20 52 C 90 12, 150 88, 220 52 C 290 12, 350 88, 420 52 C 490 12, 550 88, 620 52 C 690 12, 750 88, 820 52 C 890 12, 950 88, 985 52" fill="none" stroke="#ffe23a" stroke-width="3" stroke-dasharray="9 13" stroke-linecap="round" />
+                </svg>
+                <div class="pipeline">
+                  <div class="node"><div class="node-dot" id="node-1">1</div><div class="node-label">PLAN</div></div>
+                  <div class="node"><div class="node-dot" id="node-2">2</div><div class="node-label">SEARCH</div></div>
+                  <div class="node"><div class="node-dot" id="node-3">3</div><div class="node-label">EXTRACT</div></div>
+                  <div class="node"><div class="node-dot" id="node-4">4</div><div class="node-label">RANK</div></div>
+                  <div class="node"><div class="node-dot" id="node-5">5</div><div class="node-label">SYNTHESIZE</div></div>
+                  <div class="node"><div class="node-dot" id="node-6">6</div><div class="node-label">RENDER</div></div>
+                </div>
+              </div>
+              <ul class="source-list" id="source-list">
+                <li><span class="ok">✓</span>offline.mock<span class="bytes">1,157 bytes</span></li>
+                <li><span class="ok">✓</span>offline.mock<span class="bytes">1,184 bytes</span></li>
+                <li><span class="ok">✓</span>offline.mock<span class="bytes">1,186 bytes</span></li>
+              </ul>
+              <div class="run-meta" id="run-meta">
+                <span>SOURCES <b>27</b> ATTEMPTED</span>
+                <span><b>26</b> EXTRACTED</span>
+                <span>SEARCH CALLS <b>4 / 8</b></span>
+                <span><b>21</b> LIVE EVENTS</span>
+              </div>
+            </div>
+            <div class="panel control-panel" id="control-panel">
+              <div class="panel-head">
+                <div>
+                  <div class="kicker">SYSTEM TELEMETRY</div>
+                  <div class="panel-title">Control room</div>
+                </div>
+                <div class="panel-tag yellow">LIVE</div>
+              </div>
+              <div class="health-badges">
+                <div class="health-badge ok">API ONLINE</div>
+                <div class="health-badge">MOCK MODE</div>
+              </div>
+              <div class="stat-grid">
+                <div class="stat-cell"><span>Run state</span><strong>DONE</strong></div>
+                <div class="stat-cell"><span>Current stage</span><strong>DONE</strong></div>
+                <div class="stat-cell"><span>Attempted</span><strong>27</strong></div>
+                <div class="stat-cell"><span>Succeeded</span><strong>26</strong></div>
+                <div class="stat-cell"><span>Retained</span><strong>6</strong></div>
+                <div class="stat-cell"><span>Events</span><strong>21</strong></div>
+              </div>
+              <div class="control-footer">Search: mock · Synthesis ready<br />1,336 report chars</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SCENE 3 -->
+      <div class="clip scene" id="scene3" data-start="7.2" data-duration="4.2" data-track-index="3">
+        <div class="scene-inner s3">
+          <div class="s3-head">
+            <div class="s3-head-left">
+              <div class="eyebrow-chip"><span class="dot"></span>OUTPUT WORKSPACE / REPORT READY</div>
+              <h2 class="section-title" id="s3-title">THE REPORT WRITES ITSELF.</h2>
+            </div>
+            <div class="status-pill"><span class="live-dot"></span>6 SOURCES</div>
+          </div>
+          <div class="s3-grid">
+            <div class="panel report-card" id="report-card">
+              <div class="report-kicker">RESEARCH REPORT: QUANTUM COMPUTING 2026</div>
+              <div class="stat-row">
+                <span class="big-stat" id="big-stat">US$2.01B</span>
+                <span class="stat-in">IN 2026</span>
+              </div>
+              <div class="stat-caption" id="stat-caption">up from US$1.51B in 2025<span class="cite">[1]</span></div>
+              <div class="cagr" id="cagr">33.1% CAGR<span class="cite">[1]</span></div>
+              <div class="report-line" id="report-line">Cloud-based quantum computing services are a primary growth catalyst.<span class="cite">[2]</span></div>
+            </div>
+            <div class="source-stack">
+              <div class="source-card" id="source-1">
+                <span class="cite">[1]</span>
+                <div class="source-copy"><b>Quantum computing overview</b><small>offline.mock · extracted</small></div>
+              </div>
+              <div class="source-card" id="source-2">
+                <span class="cite">[2]</span>
+                <div class="source-copy"><b>Quantum algorithms and applications</b><small>offline.mock · extracted</small></div>
+              </div>
+              <div class="source-card" id="source-3">
+                <span class="cite">[3]</span>
+                <div class="source-copy"><b>Preparing for fault-tolerant quantum systems</b><small>offline.mock · extracted</small></div>
+              </div>
+              <div class="source-note">6 retained · citation registry locked</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SCENE 4 -->
+      <div class="clip scene" id="scene4" data-start="11.4" data-duration="5.0" data-track-index="4">
+        <div class="scene-inner s4">
+          <div class="s4-head">
+            <div class="eyebrow-chip"><span class="dot"></span>CITATION VALIDATOR / FINAL CHECK</div>
+            <h2 class="section-title" id="s4-title">IT DELETES ITS OWN HALLUCINATIONS.</h2>
+          </div>
+          <div class="s4-grid">
+            <div class="panel check-card" id="check-card">
+              <div class="check-kicker">DRAFT OUTPUT / SOURCE CHECK</div>
+              <div class="check-line" id="check-line">The market reached US$6.32B by 2030.<span class="cite-bad" id="bad-cite">[9]</span></div>
+              <div class="stamp" id="unknown-stamp">UNKNOWN SOURCE</div>
+              <div class="removed-bar" id="removed-bar">CITATION REMOVED</div>
+            </div>
+            <div class="integrity-card" id="integrity-card">
+              <div class="integrity-label">CITATION INTEGRITY</div>
+              <div class="integrity-line"><b class="good">26</b><span>VALIDATED</span></div>
+              <div class="integrity-line"><b class="bad">1</b><span>HALLUCINATED REMOVED</span></div>
+              <div class="integrity-meta">SEARCH CALLS <b>4/8</b><br />SOURCES <b>26/27</b> EXTRACTED<br />LATENCY BUDGET: <b>EXCEEDED</b></div>
+              <div class="mock-pill">MOCK RUN</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SCENE 5 -->
+      <div class="clip scene" id="scene5" data-start="16.4" data-duration="5.4" data-track-index="5">
+        <div class="scene-inner">
+          <div class="feature-head">
+            <div class="feature-head-left">
+              <div class="eyebrow-chip"><span class="dot"></span>SELF-EVALUATION / COVERAGE CHECK</div>
+              <h2 class="section-title" id="s5-title">IT RESEARCHES ITS OWN GAPS.</h2>
+            </div>
+            <div class="status-pill" id="s5-status"><span class="live-dot"></span>ROUND 2 / 2</div>
+          </div>
+          <div class="feature-grid">
+            <div class="panel audit-panel" id="audit-panel">
+              <div class="panel-head">
+                <div>
+                  <div class="kicker">SELF-EVALUATING</div>
+                  <div class="panel-title">Coverage review</div>
+                </div>
+                <div class="panel-tag yellow">GAP FOUND</div>
+              </div>
+              <div class="audit-body">
+                <div class="audit-row" id="audit-1"><span class="check">✓</span>Market size and forecast<span class="audit-status">COVERED</span></div>
+                <div class="audit-row" id="audit-2"><span class="check">✓</span>Growth drivers<span class="audit-status">COVERED</span></div>
+                <div class="audit-row gap" id="audit-3"><span class="check">!</span>Regulatory landscape<span class="audit-status gap">GAP</span></div>
+                <div class="audit-row" id="audit-4"><span class="check">✓</span>Vendor landscape<span class="audit-status">COVERED</span></div>
+                <div class="audit-row" id="audit-5"><span class="check">✓</span>Citation coverage<span class="audit-status">COVERED</span></div>
+              </div>
+              <div class="audit-note" id="audit-note">Gap query issued → research round 2 · shared budget preserved</div>
+            </div>
+            <div class="round-card" id="round-card">
+              <div class="round-badge">RESEARCH ROUND 2</div>
+              <div class="registry-label">IT KNOWS WHAT IT MISSED</div>
+              <div class="round-stage done"><span class="dot">✓</span>SELF-EVALUATING</div>
+              <div class="round-stage done"><span class="dot">✓</span>GAP QUERY</div>
+              <div class="round-stage active" id="round-active"><span class="dot">→</span>SEARCH ROUND 2</div>
+              <div class="round-stage"><span class="dot">4</span>RE-RANK</div>
+              <div class="round-stage"><span class="dot">5</span>RE-SYNTHESIZE</div>
+              <div class="round-meta">SEARCH CALLS <b>6 / 8</b> · MAX_SEARCH_CALLS SHARED<br /><b>2</b> SOURCES ADDED · BUDGET RESPECTED</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SCENE 6 -->
+      <div class="clip scene" id="scene6" data-start="21.8" data-duration="5.6" data-track-index="6">
+        <div class="scene-inner">
+          <div class="feature-head">
+            <div class="feature-head-left">
+              <div class="eyebrow-chip"><span class="dot"></span>FOLLOW-UP CHAT / GROUNDED ANSWER</div>
+              <h2 class="section-title" id="s6-title">ASK THE EVIDENCE A FOLLOW-UP.</h2>
+            </div>
+            <div class="status-pill" id="s6-status"><span class="live-dot"></span>CITED ANSWER</div>
+          </div>
+          <div class="feature-grid">
+            <div class="panel chat-panel" id="chat-panel">
+              <div class="chat-kicker">FOLLOW-UP CHAT / ASK ABOUT THE EVIDENCE</div>
+              <div class="chat-bubble user" id="chat-question">What changed since last year?</div>
+              <div class="chat-bubble bot" id="chat-answer">Cloud adoption is still the main catalyst. Budgets shifted toward error correction and fault tolerance.<small>Sources <span class="cite">[2]</span><span class="cite">[4]</span> · grounded in this run</small></div>
+              <div class="chat-input" id="chat-input"><span class="chat-field">Ask a follow-up</span><span class="chat-send">Ask follow-up</span></div>
+            </div>
+            <div class="registry-card" id="registry-card">
+              <div class="registry-label">CITATION REGISTRY / CACHED</div>
+              <div class="registry-title">Answers reuse the receipts.</div>
+              <div class="registry-row"><span class="cite">[2]</span><span><b>Quantum algorithms and applications</b><small>offline.mock · extracted</small></span></div>
+              <div class="registry-row"><span class="cite">[4]</span><span><b>Preparing for fault-tolerant quantum systems</b><small>offline.mock · extracted</small></span></div>
+              <div class="registry-note">NO NEW SEARCH NEEDED<br /><b>CONVERSATION KEPT</b> · CITATIONS LOCKED</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SCENE 7 -->
+      <div class="clip scene" id="scene7" data-start="27.4" data-duration="5.6" data-track-index="7">
+        <div class="scene-inner">
+          <div class="feature-head">
+            <div class="feature-head-left">
+              <div class="eyebrow-chip"><span class="dot"></span>COMPARE RUNS / REPORT DIFF</div>
+              <h2 class="section-title" id="s7-title">SEE WHAT CHANGED BETWEEN RUNS.</h2>
+            </div>
+            <div class="status-pill" id="s7-status"><span class="live-dot"></span>4 CHANGES</div>
+          </div>
+          <div class="feature-grid">
+            <div class="panel diff-panel" id="diff-panel">
+              <div class="diff-toolbar">
+                <span class="diff-label">AGAINST</span>
+                <span class="diff-select" id="diff-select">Quantum computing 2025</span>
+                <span class="diff-button" id="diff-button">COMPARE</span>
+              </div>
+              <div class="diff-summary" id="diff-summary"><b>4</b> CHANGES FOUND · <b>1</b> SOURCE ADDED</div>
+              <div class="diff-list">
+                <div class="diff-row" id="diff-1"><b>Executive summary</b><span class="diff-tag changed">CHANGED</span></div>
+                <div class="diff-row" id="diff-2"><b>Market size</b><span class="diff-tag changed">CHANGED</span></div>
+                <div class="diff-row" id="diff-3"><b>Regulatory outlook</b><span class="diff-tag added">ADDED</span></div>
+                <div class="diff-row" id="diff-4"><b>Legacy vendors</b><span class="diff-tag removed">REMOVED</span></div>
+              </div>
+              <div class="diff-source" id="diff-source"><span>SOURCE CHURN <b>6 → 7</b></span><span><b>+1</b> NEW · 0 DROPPED</span></div>
+            </div>
+            <div class="version-panel" id="version-panel">
+              <div class="version-label">RUN A / RUN B</div>
+              <div class="version-title">2025 → 2026</div>
+              <div class="version-row"><span>Retained sources</span><b>6 → 7</b></div>
+              <div class="version-row"><span>Sections changed</span><b>4</b></div>
+              <div class="version-row"><span>Citation churn</span><b>+1</b></div>
+              <div class="version-row"><span>Status</span><b>DIFFABLE</b></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SCENE 8 -->
+      <div class="clip scene" id="scene8" data-start="33.0" data-duration="5.6" data-track-index="8">
+        <div class="scene-inner">
+          <div class="feature-head">
+            <div class="feature-head-left">
+              <div class="eyebrow-chip"><span class="dot"></span>SCHEDULE / RECURRING RUNS</div>
+              <h2 class="section-title" id="s8-title">PUT THE RESEARCH ON REPEAT.</h2>
+            </div>
+            <div class="status-pill" id="s8-status"><span class="live-dot"></span>WEEKLY</div>
+          </div>
+          <div class="feature-grid">
+            <div class="panel schedule-panel" id="schedule-panel">
+              <div class="sched-kicker">SCHEDULE / RUN IT AGAIN</div>
+              <div class="sched-title">Run it again</div>
+              <div class="sched-input" id="sched-input">Quantum computing 2026</div>
+              <div class="sched-controls" id="sched-controls">
+                <span class="freq-chip">ONCE</span>
+                <span class="freq-chip">HOURLY</span>
+                <span class="freq-chip">DAILY</span>
+                <span class="freq-chip active">WEEKLY</span>
+                <span class="freq-chip">MONTHLY</span>
+                <span class="freq-chip">CRON</span>
+                <span class="sched-btn">SCHEDULE</span>
+              </div>
+              <div class="sched-note">Background tick starts due runs · a one-time schedule auto-disables after it fires</div>
+              <div class="sched-foot" id="sched-foot"><span>NEXT RUN <b>MON 09:00</b></span><span>TICK <b>30S</b></span><span>WORKERS <b>1</b></span></div>
+            </div>
+            <div class="sched-card" id="sched-card">
+              <div class="sched-kicker">UPCOMING RUNS</div>
+              <div class="sched-title">Your research queue</div>
+              <div class="sched-item" id="sched-1"><span class="clock">WK</span><span class="what"><b>Quantum computing 2026</b><small>weekly · next Monday 09:00</small></span><span class="state">ACTIVE</span></div>
+              <div class="sched-item" id="sched-2"><span class="clock">DY</span><span class="what"><b>AI agent reliability</b><small>daily · 07:30</small></span><span class="state">ACTIVE</span></div>
+              <div class="sched-item" id="sched-3"><span class="clock">1×</span><span class="what"><b>Gap drill</b><small>once · auto-disabled after firing</small></span><span class="state off">PAUSED</span></div>
+              <div class="registry-note">RUNS ITSELF WHILE YOU SLEEP<br /><b>SINGLE WORKER</b> · IN-PROCESS SCHEDULER</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SCENE 9 -->
+      <div class="clip scene" id="scene9" data-start="38.6" data-duration="9.0" data-track-index="9">
+        <div class="scene-inner">
+          <div class="feature-head">
+            <div class="feature-head-left">
+              <div class="eyebrow-chip"><span class="dot"></span>ALTERNATE FORMATS / EXPORT THIS REPORT</div>
+              <h2 class="section-title" id="s9-title">ONE REPORT. NINE WAYS OUT.</h2>
+            </div>
+            <div class="status-pill" id="s9-status"><span class="live-dot"></span>9 FORMATS</div>
+          </div>
+          <div class="export-wrap">
+            <div class="export-grid" id="export-grid">
+              <div class="format-tile hero" id="export-1"><span class="f-badge">PRIMARY</span><span class="f-label">PDF</span><span class="f-ext">research-report.pdf</span><span class="f-arrow">↓</span></div>
+              <div class="format-tile" id="export-2"><span class="f-label">Markdown</span><span class="f-ext">research-report.md</span><span class="f-arrow">↓</span></div>
+              <div class="format-tile" id="export-3"><span class="f-label">HTML</span><span class="f-ext">research-report.html</span><span class="f-arrow">↓</span></div>
+              <div class="format-tile" id="export-4"><span class="f-label">Plain text</span><span class="f-ext">research-report.txt</span><span class="f-arrow">↓</span></div>
+              <div class="format-tile" id="export-5"><span class="f-label">JSON</span><span class="f-ext">research-report.json</span><span class="f-arrow">↓</span></div>
+              <div class="format-tile" id="export-6"><span class="f-label">Executive</span><span class="f-ext">executive.md</span><span class="f-arrow">↓</span></div>
+              <div class="format-tile" id="export-7"><span class="f-label">Blog post</span><span class="f-ext">blog.md</span><span class="f-arrow">↓</span></div>
+              <div class="format-tile" id="export-8"><span class="f-label">LinkedIn</span><span class="f-ext">linkedin.md</span><span class="f-arrow">↓</span></div>
+              <div class="format-tile" id="export-9"><span class="f-label">Marp slides</span><span class="f-ext">marp.md</span><span class="f-arrow">↓</span></div>
+            </div>
+            <div class="export-ticker" id="export-ticker"><span><b>report.md</b></span><span>report.pdf</span><span>report.html</span><span>report.txt</span><span>report.json</span><span>/report/executive</span><span>/report/blog</span><span>/report/linkedin</span><span>/report/marp</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SCENE 10 -->
+      <div class="clip scene" id="scene10" data-start="47.6" data-duration="4.8" data-track-index="10">
+        <div class="scene-inner">
+          <div class="feature-head">
+            <div class="feature-head-left">
+              <div class="eyebrow-chip"><span class="dot"></span>NOTIFICATIONS / DELIVERY UPDATES</div>
+              <h2 class="section-title" id="s10-title">AND IT TELLS YOU WHEN IT'S DONE.</h2>
+            </div>
+            <div class="status-pill" id="s10-status"><span class="live-dot"></span>DELIVERED</div>
+          </div>
+          <div class="feature-grid">
+            <div class="panel notify-panel" id="notify-panel">
+              <div class="notification unread" id="notify-1"><span class="bell">!</span><span class="notify-copy"><b>Quantum computing 2026 — report ready</b><small>26 citations validated · 1 removed · PDF export ready</small></span><span class="unread-dot"></span></div>
+              <div class="notification" id="notify-2"><span class="bell">✓</span><span class="notify-copy"><b>Weekly run complete</b><small>Scheduled run · 6 sources · delivered</small></span></div>
+              <div class="notification" id="notify-3"><span class="bell">@</span><span class="notify-copy"><b>Email sent</b><small>SMTP delivery · completed</small></span></div>
+              <div class="notification" id="notify-4"><span class="bell">↑</span><span class="notify-copy"><b>Webhook delivered</b><small>COMPLETION_WEBHOOK_URL · 200 OK</small></span></div>
+            </div>
+            <div class="channel-card" id="channel-card">
+              <div class="registry-label">DELIVERY CHANNELS</div>
+              <div class="registry-title">It comes to you.</div>
+              <div class="registry-row"><span class="cite">✓</span><span><b>In-app</b><small>unread → read · GET / PATCH /api/notifications</small></span></div>
+              <div class="registry-row"><span class="cite">✓</span><span><b>Webhook</b><small>COMPLETION_WEBHOOK_URL</small></span></div>
+              <div class="registry-row"><span class="cite">✓</span><span><b>Email</b><small>SMTP settings · .env</small></span></div>
+              <div class="registry-note">NO POLLING<br /><b>IN-APP</b> · <b>WEBHOOK</b> · <b>EMAIL</b></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SCENE 11 -->
+      <div class="clip scene" id="scene11" data-start="52.4" data-duration="7.6" data-track-index="11">
+        <div class="scene-inner s5">
+          <div class="logos">
+            <div class="logo-mark-big" id="logo-mark">R</div>
+            <h1 class="brand-big" id="brand-big">OMNIRUSH</h1>
+            <div class="brand-tag" id="brand-tag">RESEARCH THAT SHOWS ITS WORK.</div>
+            <div class="brand-footer" id="brand-footer">Replayable runs · citation-safe output · nine export formats.</div>
+            <div class="recap-strip" id="recap-strip"><b>PLAN</b><span class="sep">·</span><b>SEARCH</b><span class="sep">·</span><b>CITE</b><span class="sep">·</span><b>REFINE</b><span class="sep">·</span><b>COMPARE</b><span class="sep">·</span><b>SCHEDULE</b><span class="sep">·</span><b>EXPORT</b></div>
+            <div class="final-stamp" id="final-stamp">ASK THE SYSTEM ANYTHING.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TRANSITIONS -->
+      <div class="clip wipe wipe-yellow" id="wipe-1" data-start="2.85" data-duration="0.6" data-track-index="20"></div>
+      <div class="clip wipe wipe-paper" id="wipe-2" data-start="6.95" data-duration="0.55" data-track-index="20"></div>
+      <div class="clip wipe wipe-ink" id="wipe-3" data-start="11.15" data-duration="0.55" data-track-index="20"></div>
+      <div class="clip wipe wipe-yellow" id="wipe-4" data-start="16.15" data-duration="0.55" data-track-index="20"></div>
+      <div class="clip wipe wipe-paper" id="wipe-5" data-start="21.62" data-duration="0.55" data-track-index="21"></div>
+      <div class="clip wipe wipe-ink" id="wipe-6" data-start="27.22" data-duration="0.55" data-track-index="22"></div>
+      <div class="clip wipe wipe-yellow" id="wipe-7" data-start="32.82" data-duration="0.55" data-track-index="23"></div>
+      <div class="clip wipe wipe-paper" id="wipe-8" data-start="38.42" data-duration="0.55" data-track-index="24"></div>
+      <div class="clip wipe wipe-ink" id="wipe-9" data-start="47.42" data-duration="0.55" data-track-index="25"></div>
+      <div class="clip wipe wipe-yellow" id="wipe-10" data-start="52.22" data-duration="0.55" data-track-index="26"></div>
+
+      <!-- AUDIO -->
+      <audio id="bg-music" data-start="0" data-duration="60" data-track-index="10" data-volume="0.38" src="assets/music/happy-beats-business-moves-vol-10-by-ende-dot-app.mp3"></audio>
+
+      <audio id="sfx-word-1" data-start="0.33" data-duration="0.11" data-track-index="11" data-volume="0.45" src="assets/sfx/interface/drop_001.ogg"></audio>
+      <audio id="sfx-word-2" data-start="0.53" data-duration="0.19" data-track-index="12" data-volume="0.45" src="assets/sfx/interface/drop_002.ogg"></audio>
+      <audio id="sfx-word-3" data-start="0.73" data-duration="0.11" data-track-index="13" data-volume="0.55" src="assets/sfx/interface/drop_001.ogg"></audio>
+      <audio id="sfx-start" data-start="2.55" data-duration="0.01" data-track-index="14" data-volume="0.8" src="assets/sfx/interface/click_003.ogg"></audio>
+
+      <audio id="sfx-node-1" data-start="3.55" data-duration="0.01" data-track-index="15" data-volume="0.55" src="assets/sfx/interface/click_003.ogg"></audio>
+      <audio id="sfx-node-2" data-start="4.10" data-duration="0.05" data-track-index="16" data-volume="0.55" src="assets/sfx/interface/select_008.ogg"></audio>
+      <audio id="sfx-node-3" data-start="4.64" data-duration="0.01" data-track-index="17" data-volume="0.55" src="assets/sfx/interface/click_003.ogg"></audio>
+      <audio id="sfx-node-4" data-start="5.19" data-duration="0.05" data-track-index="18" data-volume="0.55" src="assets/sfx/interface/select_008.ogg"></audio>
+      <audio id="sfx-node-5" data-start="5.74" data-duration="0.01" data-track-index="19" data-volume="0.55" src="assets/sfx/interface/click_003.ogg"></audio>
+      <audio id="sfx-node-6" data-start="6.28" data-duration="0.05" data-track-index="21" data-volume="0.6" src="assets/sfx/interface/select_008.ogg"></audio>
+
+      <audio id="sfx-source-1" data-start="8.22" data-duration="0.69" data-track-index="22" data-volume="0.6" src="assets/sfx/casino/card-place-1.ogg"></audio>
+      <audio id="sfx-source-2" data-start="8.73" data-duration="0.69" data-track-index="23" data-volume="0.6" src="assets/sfx/casino/card-place-1.ogg"></audio>
+      <audio id="sfx-source-3" data-start="9.29" data-duration="0.69" data-track-index="24" data-volume="0.6" src="assets/sfx/casino/card-place-1.ogg"></audio>
+      <audio id="sfx-key-1" data-start="7.95" data-duration="0.25" data-track-index="25" data-volume="0.4" src="assets/sfx/keyboard/keypress-008.wav"></audio>
+      <audio id="sfx-key-2" data-start="8.05" data-duration="0.25" data-track-index="26" data-volume="0.4" src="assets/sfx/keyboard/keypress-019.wav"></audio>
+
+      <audio id="sfx-stamp" data-start="11.95" data-duration="0.19" data-track-index="27" data-volume="0.85" src="assets/sfx/impact/impactSoft_medium_001.ogg"></audio>
+      <audio id="sfx-remove" data-start="12.65" data-duration="0.01" data-track-index="28" data-volume="0.75" src="assets/sfx/interface/click_003.ogg"></audio>
+      <audio id="sfx-badge" data-start="14.73" data-duration="0.13" data-track-index="29" data-volume="0.6" src="assets/sfx/interface/bong_001.ogg"></audio>
+
+      <audio id="sfx-logo" data-start="54.01" data-duration="0.13" data-track-index="30" data-volume="0.75" src="assets/sfx/interface/bong_001.ogg"></audio>
+      <audio id="sfx-footer" data-start="56.05" data-duration="0.11" data-track-index="31" data-volume="0.45" src="assets/sfx/interface/drop_001.ogg"></audio>
+
+      <audio id="sfx-gap" data-start="17.72" data-duration="0.19" data-track-index="40" data-volume="0.6" src="assets/sfx/impact/impactSoft_medium_001.ogg"></audio>
+      <audio id="sfx-round-tick-1" data-start="18.05" data-duration="0.01" data-track-index="41" data-volume="0.5" src="assets/sfx/interface/click_003.ogg"></audio>
+      <audio id="sfx-round-tick-2" data-start="18.55" data-duration="0.05" data-track-index="42" data-volume="0.5" src="assets/sfx/interface/select_008.ogg"></audio>
+      <audio id="sfx-round-tick-3" data-start="19.05" data-duration="0.01" data-track-index="43" data-volume="0.55" src="assets/sfx/interface/click_003.ogg"></audio>
+      <audio id="sfx-round-badge" data-start="19.62" data-duration="0.13" data-track-index="44" data-volume="0.55" src="assets/sfx/interface/bong_001.ogg"></audio>
+
+      <audio id="sfx-chat-send" data-start="22.62" data-duration="0.01" data-track-index="45" data-volume="0.7" src="assets/sfx/interface/click_003.ogg"></audio>
+      <audio id="sfx-chat-reply" data-start="23.15" data-duration="0.11" data-track-index="46" data-volume="0.55" src="assets/sfx/interface/drop_001.ogg"></audio>
+      <audio id="sfx-chat-cite" data-start="24.05" data-duration="0.05" data-track-index="47" data-volume="0.45" src="assets/sfx/interface/select_008.ogg"></audio>
+      <audio id="sfx-registry" data-start="24.62" data-duration="0.13" data-track-index="48" data-volume="0.45" src="assets/sfx/interface/bong_001.ogg"></audio>
+
+      <audio id="sfx-compare" data-start="28.12" data-duration="0.01" data-track-index="49" data-volume="0.7" src="assets/sfx/interface/click_003.ogg"></audio>
+      <audio id="sfx-diff-1" data-start="28.62" data-duration="0.11" data-track-index="50" data-volume="0.5" src="assets/sfx/interface/drop_001.ogg"></audio>
+      <audio id="sfx-diff-2" data-start="29.05" data-duration="0.11" data-track-index="51" data-volume="0.5" src="assets/sfx/interface/drop_002.ogg"></audio>
+      <audio id="sfx-diff-3" data-start="29.48" data-duration="0.11" data-track-index="52" data-volume="0.5" src="assets/sfx/interface/drop_001.ogg"></audio>
+      <audio id="sfx-diff-4" data-start="29.91" data-duration="0.11" data-track-index="53" data-volume="0.5" src="assets/sfx/interface/drop_002.ogg"></audio>
+
+      <audio id="sfx-schedule" data-start="34.22" data-duration="0.01" data-track-index="54" data-volume="0.7" src="assets/sfx/interface/click_003.ogg"></audio>
+      <audio id="sfx-sched-1" data-start="34.82" data-duration="0.69" data-track-index="55" data-volume="0.55" src="assets/sfx/casino/card-place-1.ogg"></audio>
+      <audio id="sfx-sched-2" data-start="35.42" data-duration="0.69" data-track-index="56" data-volume="0.55" src="assets/sfx/casino/card-place-1.ogg"></audio>
+      <audio id="sfx-sched-3" data-start="36.02" data-duration="0.69" data-track-index="57" data-volume="0.55" src="assets/sfx/casino/card-place-1.ogg"></audio>
+
+      <audio id="sfx-export-1" data-start="39.25" data-duration="0.11" data-track-index="58" data-volume="0.45" src="assets/sfx/interface/drop_001.ogg"></audio>
+      <audio id="sfx-export-2" data-start="39.55" data-duration="0.11" data-track-index="59" data-volume="0.42" src="assets/sfx/interface/drop_002.ogg"></audio>
+      <audio id="sfx-export-3" data-start="39.85" data-duration="0.11" data-track-index="60" data-volume="0.42" src="assets/sfx/interface/drop_001.ogg"></audio>
+      <audio id="sfx-export-4" data-start="40.15" data-duration="0.11" data-track-index="61" data-volume="0.42" src="assets/sfx/interface/drop_002.ogg"></audio>
+      <audio id="sfx-export-5" data-start="40.45" data-duration="0.11" data-track-index="62" data-volume="0.42" src="assets/sfx/interface/drop_001.ogg"></audio>
+      <audio id="sfx-export-6" data-start="40.75" data-duration="0.11" data-track-index="63" data-volume="0.42" src="assets/sfx/interface/drop_002.ogg"></audio>
+      <audio id="sfx-export-7" data-start="41.05" data-duration="0.11" data-track-index="64" data-volume="0.42" src="assets/sfx/interface/drop_001.ogg"></audio>
+      <audio id="sfx-export-8" data-start="41.35" data-duration="0.11" data-track-index="65" data-volume="0.42" src="assets/sfx/interface/drop_002.ogg"></audio>
+      <audio id="sfx-export-9" data-start="41.65" data-duration="0.11" data-track-index="66" data-volume="0.42" src="assets/sfx/interface/drop_001.ogg"></audio>
+      <audio id="sfx-export-pdf" data-start="42.35" data-duration="0.13" data-track-index="67" data-volume="0.55" src="assets/sfx/interface/bong_001.ogg"></audio>
+
+      <audio id="sfx-notify" data-start="48.22" data-duration="0.13" data-track-index="68" data-volume="0.55" src="assets/sfx/interface/bong_001.ogg"></audio>
+      <audio id="sfx-notify-read" data-start="49.05" data-duration="0.01" data-track-index="69" data-volume="0.6" src="assets/sfx/interface/click_003.ogg"></audio>
+      <audio id="sfx-channel-1" data-start="49.62" data-duration="0.11" data-track-index="70" data-volume="0.45" src="assets/sfx/interface/drop_001.ogg"></audio>
+      <audio id="sfx-channel-2" data-start="49.95" data-duration="0.11" data-track-index="71" data-volume="0.45" src="assets/sfx/interface/drop_002.ogg"></audio>
+      <audio id="sfx-channel-3" data-start="50.28" data-duration="0.11" data-track-index="72" data-volume="0.45" src="assets/sfx/interface/drop_001.ogg"></audio>
+
+      <audio id="sfx-recap" data-start="55.2" data-duration="0.11" data-track-index="73" data-volume="0.4" src="assets/sfx/interface/drop_002.ogg"></audio>
+    </div>
+
+    <script>
+      const tl = gsap.timeline({ paused: true });
+
+      // ---------- Scene 1: command deck hook ----------
+      tl.from('#topbar', { y: -120, opacity: 0, duration: 0.45, ease: 'expo.out' }, 0.12);
+      tl.from('#s1-eyebrow', { y: 22, opacity: 0, duration: 0.32, ease: 'power2.out' }, 0.22);
+      tl.from('#hook-1', { y: 70, opacity: 0, rotation: -1.5, duration: 0.36, ease: 'expo.out' }, 0.33);
+      tl.from('#hook-2', { y: 70, opacity: 0, rotation: 1.2, duration: 0.36, ease: 'expo.out' }, 0.53);
+      tl.from('#hook-3', { y: 70, opacity: 0, rotation: -1, duration: 0.38, ease: 'expo.out' }, 0.73);
+      tl.from('#s1-sub', { y: 20, opacity: 0, duration: 0.34, ease: 'power2.out' }, 1.18);
+      tl.from('#s1-card', { y: 40, opacity: 0, duration: 0.45, ease: 'expo.out' }, 0.62);
+      tl.from('#s1-input', { x: -18, opacity: 0, duration: 0.28, ease: 'power2.out' }, 0.78);
+      tl.from('#start-btn', { scale: 0.9, opacity: 0, duration: 0.3, ease: 'back.out(1.7)' }, 0.88);
+      tl.from('.chips .chip', { y: 12, opacity: 0, stagger: 0.08, duration: 0.26, ease: 'power2.out' }, 1.3);
+      tl.from('.command-meta', { opacity: 0, duration: 0.3 }, 1.45);
+      tl.fromTo('#cursor', { x: 90, y: 110, opacity: 0 }, { x: 0, y: 0, opacity: 1, duration: 0.55, ease: 'power2.inOut' }, 1.92);
+      tl.fromTo('#start-btn', { scale: 1 }, { scale: 0.94, duration: 0.1, ease: 'power2.in' }, 2.52);
+      tl.to('#start-btn', { scale: 1, duration: 0.18, ease: 'back.out(2)' }, 2.62);
+
+      // ---------- Scene 2: pipeline ----------
+      tl.from('#s2-title', { x: -40, opacity: 0, duration: 0.4, ease: 'expo.out' }, 3.35);
+      tl.from('#s2-status', { y: -16, opacity: 0, duration: 0.32, ease: 'power2.out' }, 3.48);
+      tl.from('#run-panel', { y: 34, opacity: 0, duration: 0.4, ease: 'expo.out' }, 3.45);
+      tl.from('#control-panel', { y: 34, opacity: 0, duration: 0.4, ease: 'expo.out' }, 3.55);
+      tl.from('#node-1', { scale: 0, opacity: 0, duration: 0.3, ease: 'back.out(2)' }, 3.55);
+      tl.from('#node-2', { scale: 0, opacity: 0, duration: 0.3, ease: 'back.out(2)' }, 4.10);
+      tl.from('#node-3', { scale: 0, opacity: 0, duration: 0.3, ease: 'back.out(2)' }, 4.64);
+      tl.from('#node-4', { scale: 0, opacity: 0, duration: 0.3, ease: 'back.out(2)' }, 5.19);
+      tl.from('#node-5', { scale: 0, opacity: 0, duration: 0.3, ease: 'back.out(2)' }, 5.74);
+      tl.from('#node-6', { scale: 0, opacity: 0, duration: 0.3, ease: 'back.out(2)' }, 6.28);
+      tl.to('#node-1', { backgroundColor: '#ffe23a', duration: 0.2 }, 3.65);
+      tl.to('#node-2', { backgroundColor: '#ffe23a', duration: 0.2 }, 4.20);
+      tl.to('#node-3', { backgroundColor: '#4080fb', color: '#fff8ee', duration: 0.2 }, 4.74);
+      tl.to('#node-4', { backgroundColor: '#f57eb4', duration: 0.2 }, 5.29);
+      tl.to('#node-5', { backgroundColor: '#22ac5f', color: '#0c0e0f', duration: 0.2 }, 5.84);
+      tl.to('#node-6', { backgroundColor: '#ef4225', color: '#fff8ee', duration: 0.2 }, 6.38);
+      tl.from('#source-list li', { x: -16, opacity: 0, stagger: 0.16, duration: 0.26, ease: 'power2.out' }, 6.1);
+      tl.from('#run-meta span', { y: 8, opacity: 0, stagger: 0.07, duration: 0.25, ease: 'power2.out' }, 5.85);
+      tl.from('.stat-cell', { y: 12, opacity: 0, stagger: 0.05, duration: 0.25, ease: 'power2.out' }, 4.1);
+      tl.from('.health-badge', { scale: 0.85, opacity: 0, duration: 0.24, stagger: 0.06, ease: 'back.out(1.6)' }, 3.75);
+
+      // ---------- Scene 3: report ----------
+      tl.from('#s3-title', { x: -40, opacity: 0, duration: 0.4, ease: 'expo.out' }, 7.35);
+      tl.from('#report-card', { x: -34, opacity: 0, duration: 0.45, ease: 'expo.out' }, 7.42);
+      tl.from('#big-stat', { scale: 0.72, opacity: 0, duration: 0.5, ease: 'back.out(1.8)' }, 7.7);
+      tl.from('#stat-caption', { y: 18, opacity: 0, duration: 0.32, ease: 'power2.out' }, 8.05);
+      tl.from('#cagr', { y: 18, opacity: 0, duration: 0.32, ease: 'power2.out' }, 8.22);
+      tl.from('#report-line', { y: 18, opacity: 0, duration: 0.32, ease: 'power2.out' }, 8.55);
+      tl.from('#source-1', { x: 90, opacity: 0, duration: 0.38, ease: 'expo.out' }, 8.22);
+      tl.from('#source-2', { x: 90, opacity: 0, duration: 0.38, ease: 'expo.out' }, 8.73);
+      tl.from('#source-3', { x: 90, opacity: 0, duration: 0.38, ease: 'expo.out' }, 9.29);
+      tl.from('.source-note', { opacity: 0, duration: 0.3 }, 9.55);
+
+      // ---------- Scene 4: integrity ----------
+      tl.from('#s4-title', { y: 34, opacity: 0, duration: 0.42, ease: 'expo.out' }, 11.5);
+      tl.from('#check-card', { x: -34, opacity: 0, duration: 0.42, ease: 'expo.out' }, 11.56);
+      tl.from('#check-line', { y: 16, opacity: 0, duration: 0.32, ease: 'power2.out' }, 11.74);
+      tl.from('#bad-cite', { scale: 0.7, rotation: -8, opacity: 0, duration: 0.32, ease: 'back.out(2)' }, 11.95);
+      tl.from('#unknown-stamp', { scale: 2.2, rotation: -16, opacity: 0, duration: 0.3, ease: 'power4.in' }, 12.05);
+      tl.to('#bad-cite', { backgroundColor: '#ef4225', color: '#fff8ee', borderColor: '#0c0e0f', duration: 0.22 }, 12.05);
+      tl.from('#removed-bar', { scaleX: 0, opacity: 0, duration: 0.3, ease: 'power4.out' }, 12.62);
+      tl.to('#unknown-stamp', { rotation: -5, scale: 1, duration: 0.28, ease: 'power2.out' }, 12.36);
+      tl.to('#bad-cite', { rotation: -4, scale: 0.97, duration: 0.26, ease: 'power2.out' }, 12.7);
+      tl.from('#integrity-card', { y: 44, scale: 0.94, opacity: 0, duration: 0.45, ease: 'expo.out' }, 13.0);
+      tl.from('.integrity-line', { y: 18, opacity: 0, stagger: 0.14, duration: 0.32, ease: 'power2.out' }, 13.35);
+      tl.from('.integrity-meta', { opacity: 0, duration: 0.32 }, 13.62);
+      tl.from('.mock-pill', { scale: 0.8, opacity: 0, duration: 0.26, ease: 'back.out(2)' }, 13.8);
+      tl.to('#integrity-card', { scale: 1.03, duration: 0.16, ease: 'power2.out' }, 14.73);
+      tl.to('#integrity-card', { scale: 1, duration: 0.3, ease: 'power2.inOut' }, 14.89);
+
+      // ---------- Scene 5: research rounds ----------
+      tl.from('#s5-title', { x: -40, opacity: 0, duration: 0.4, ease: 'expo.out' }, 16.55);
+      tl.from('#s5-status', { y: -16, opacity: 0, duration: 0.32, ease: 'power2.out' }, 16.68);
+      tl.from('#audit-panel', { y: 34, opacity: 0, duration: 0.4, ease: 'expo.out' }, 16.65);
+      tl.from('#round-card', { y: 34, opacity: 0, duration: 0.4, ease: 'expo.out' }, 16.75);
+      tl.from('#audit-1', { x: -18, opacity: 0, duration: 0.3, ease: 'power2.out' }, 16.95);
+      tl.from('#audit-2', { x: -18, opacity: 0, duration: 0.3, ease: 'power2.out' }, 17.25);
+      tl.from('#audit-3', { x: -18, opacity: 0, duration: 0.3, ease: 'power2.out' }, 17.55);
+      tl.from('#audit-4', { x: -18, opacity: 0, duration: 0.3, ease: 'power2.out' }, 17.95);
+      tl.from('#audit-5', { x: -18, opacity: 0, duration: 0.3, ease: 'power2.out' }, 18.25);
+      tl.from('#audit-3', { scale: 1.035, duration: 0.16, ease: 'power2.out' }, 17.72);
+      tl.to('#audit-3', { scale: 1, duration: 0.24, ease: 'power2.inOut' }, 17.88);
+      tl.from('#audit-note', { y: 10, opacity: 0, duration: 0.3, ease: 'power2.out' }, 18.6);
+      tl.from('#round-card .round-stage', { x: 26, opacity: 0, stagger: 0.16, duration: 0.3, ease: 'expo.out' }, 17.0);
+      tl.to('#round-active', { scale: 1.03, duration: 0.16, ease: 'power2.out' }, 19.62);
+      tl.to('#round-active', { scale: 1, duration: 0.24, ease: 'power2.inOut' }, 19.78);
+      tl.from('#round-card .round-meta', { y: 12, opacity: 0, duration: 0.3, ease: 'power2.out' }, 19.95);
+
+      // ---------- Scene 6: follow-up chat ----------
+      tl.from('#s6-title', { x: -40, opacity: 0, duration: 0.4, ease: 'expo.out' }, 21.95);
+      tl.from('#s6-status', { y: -16, opacity: 0, duration: 0.32, ease: 'power2.out' }, 22.08);
+      tl.from('#chat-panel', { y: 34, opacity: 0, duration: 0.4, ease: 'expo.out' }, 22.05);
+      tl.from('#registry-card', { y: 34, opacity: 0, duration: 0.4, ease: 'expo.out' }, 22.15);
+      tl.from('#chat-question', { x: 40, opacity: 0, duration: 0.32, ease: 'expo.out' }, 22.35);
+      tl.from('#chat-answer', { y: 20, opacity: 0, duration: 0.36, ease: 'power2.out' }, 23.05);
+      tl.from('#chat-answer .cite', { scale: 0.7, opacity: 0, stagger: 0.08, duration: 0.26, ease: 'back.out(2)' }, 23.45);
+      tl.from('#chat-input', { y: 12, opacity: 0, duration: 0.3, ease: 'power2.out' }, 24.0);
+      tl.from('#registry-card .registry-label', { x: 24, opacity: 0, duration: 0.3, ease: 'power2.out' }, 22.6);
+      tl.from('#registry-card .registry-title', { x: 24, opacity: 0, duration: 0.34, ease: 'expo.out' }, 22.72);
+      tl.from('#registry-card .registry-row', { x: 24, opacity: 0, stagger: 0.36, duration: 0.32, ease: 'expo.out' }, 24.12);
+      tl.from('#registry-card .registry-note', { y: 10, opacity: 0, duration: 0.3, ease: 'power2.out' }, 24.95);
+
+      // ---------- Scene 7: compare runs ----------
+      tl.from('#s7-title', { x: -40, opacity: 0, duration: 0.4, ease: 'expo.out' }, 27.55);
+      tl.from('#s7-status', { y: -16, opacity: 0, duration: 0.32, ease: 'power2.out' }, 27.68);
+      tl.from('#diff-panel', { y: 34, opacity: 0, duration: 0.4, ease: 'expo.out' }, 27.65);
+      tl.from('#version-panel', { y: 34, opacity: 0, duration: 0.4, ease: 'expo.out' }, 27.75);
+      tl.from('#diff-select', { x: -18, opacity: 0, duration: 0.3, ease: 'power2.out' }, 27.9);
+      tl.from('#diff-button', { scale: 0.9, opacity: 0, duration: 0.28, ease: 'back.out(1.7)' }, 28.08);
+      tl.to('#diff-button', { scale: 0.94, duration: 0.1, ease: 'power2.in' }, 28.55);
+      tl.to('#diff-button', { scale: 1, duration: 0.18, ease: 'back.out(2)' }, 28.65);
+      tl.from('#diff-summary', { y: 14, opacity: 0, duration: 0.32, ease: 'expo.out' }, 28.75);
+      tl.from('#diff-1', { x: 26, opacity: 0, duration: 0.28, ease: 'power2.out' }, 29.05);
+      tl.from('#diff-2', { x: 26, opacity: 0, duration: 0.28, ease: 'power2.out' }, 29.48);
+      tl.from('#diff-3', { x: 26, opacity: 0, duration: 0.28, ease: 'power2.out' }, 29.91);
+      tl.from('#diff-4', { x: 26, opacity: 0, duration: 0.28, ease: 'power2.out' }, 30.34);
+      tl.from('#diff-source', { y: 10, opacity: 0, duration: 0.3, ease: 'power2.out' }, 30.6);
+      tl.from('#version-panel .version-label', { x: 24, opacity: 0, duration: 0.3, ease: 'power2.out' }, 28.1);
+      tl.from('#version-panel .version-title', { x: 24, opacity: 0, duration: 0.34, ease: 'expo.out' }, 28.24);
+      tl.from('#version-panel .version-row', { x: 24, opacity: 0, stagger: 0.14, duration: 0.28, ease: 'power2.out' }, 29.2);
+
+      // ---------- Scene 8: schedules ----------
+      tl.from('#s8-title', { x: -40, opacity: 0, duration: 0.4, ease: 'expo.out' }, 33.15);
+      tl.from('#s8-status', { y: -16, opacity: 0, duration: 0.32, ease: 'power2.out' }, 33.28);
+      tl.from('#schedule-panel', { y: 34, opacity: 0, duration: 0.4, ease: 'expo.out' }, 33.25);
+      tl.from('#sched-card', { y: 34, opacity: 0, duration: 0.4, ease: 'expo.out' }, 33.35);
+      tl.from('#sched-input', { x: -18, opacity: 0, duration: 0.3, ease: 'power2.out' }, 33.55);
+      tl.from('#sched-controls .freq-chip', { y: 12, opacity: 0, stagger: 0.07, duration: 0.26, ease: 'power2.out' }, 33.75);
+      tl.from('#sched-controls .sched-btn', { scale: 0.9, opacity: 0, duration: 0.28, ease: 'back.out(1.7)' }, 34.12);
+      tl.from('#schedule-panel .sched-note', { opacity: 0, duration: 0.3 }, 34.35);
+      tl.from('#sched-1', { x: 30, opacity: 0, duration: 0.32, ease: 'expo.out' }, 34.82);
+      tl.from('#sched-2', { x: 30, opacity: 0, duration: 0.32, ease: 'expo.out' }, 35.42);
+      tl.from('#sched-3', { x: 30, opacity: 0, duration: 0.32, ease: 'expo.out' }, 36.02);
+      tl.from('#sched-foot', { y: 10, opacity: 0, duration: 0.3, ease: 'power2.out' }, 36.5);
+      tl.from('#sched-card .registry-note', { y: 10, opacity: 0, duration: 0.3, ease: 'power2.out' }, 36.7);
+
+      // ---------- Scene 9: exports ----------
+      tl.from('#s9-title', { x: -40, opacity: 0, duration: 0.4, ease: 'expo.out' }, 38.75);
+      tl.from('#s9-status', { y: -16, opacity: 0, duration: 0.32, ease: 'power2.out' }, 38.88);
+      tl.from('#export-1', { y: 28, opacity: 0, duration: 0.34, ease: 'expo.out' }, 39.25);
+      tl.from('#export-2', { y: 28, opacity: 0, duration: 0.32, ease: 'expo.out' }, 39.55);
+      tl.from('#export-3', { y: 28, opacity: 0, duration: 0.32, ease: 'expo.out' }, 39.85);
+      tl.from('#export-4', { y: 28, opacity: 0, duration: 0.32, ease: 'expo.out' }, 40.15);
+      tl.from('#export-5', { y: 28, opacity: 0, duration: 0.32, ease: 'expo.out' }, 40.45);
+      tl.from('#export-6', { y: 28, opacity: 0, duration: 0.32, ease: 'expo.out' }, 40.75);
+      tl.from('#export-7', { y: 28, opacity: 0, duration: 0.32, ease: 'expo.out' }, 41.05);
+      tl.from('#export-8', { y: 28, opacity: 0, duration: 0.32, ease: 'expo.out' }, 41.35);
+      tl.from('#export-9', { y: 28, opacity: 0, duration: 0.32, ease: 'expo.out' }, 41.65);
+      tl.to('#export-1', { scale: 1.035, duration: 0.16, ease: 'power2.out' }, 42.35);
+      tl.to('#export-1', { scale: 1, duration: 0.26, ease: 'power2.inOut' }, 42.51);
+      tl.from('#export-ticker', { y: 10, opacity: 0, duration: 0.32, ease: 'power2.out' }, 42.6);
+      tl.to('#export-grid', { y: -6, duration: 1.2, ease: 'sine.inOut' }, 44.0);
+      tl.to('#export-grid', { y: 0, duration: 1.2, ease: 'sine.inOut' }, 45.2);
+
+      // ---------- Scene 10: notifications ----------
+      tl.from('#s10-title', { x: -40, opacity: 0, duration: 0.4, ease: 'expo.out' }, 47.75);
+      tl.from('#s10-status', { y: -16, opacity: 0, duration: 0.32, ease: 'power2.out' }, 47.88);
+      tl.from('#notify-panel', { y: 34, opacity: 0, duration: 0.4, ease: 'expo.out' }, 47.85);
+      tl.from('#channel-card', { y: 34, opacity: 0, duration: 0.4, ease: 'expo.out' }, 47.95);
+      tl.from('#notify-1', { x: -24, opacity: 0, duration: 0.32, ease: 'expo.out' }, 48.2);
+      tl.from('#notify-2', { x: -24, opacity: 0, duration: 0.32, ease: 'expo.out' }, 48.65);
+      tl.from('#notify-3', { x: -24, opacity: 0, duration: 0.32, ease: 'expo.out' }, 49.05);
+      tl.from('#notify-4', { x: -24, opacity: 0, duration: 0.32, ease: 'expo.out' }, 49.45);
+      tl.to('#notify-1 .unread-dot', { scale: 0, duration: 0.18, ease: 'power2.in' }, 49.05);
+      tl.to('#notify-1', { backgroundColor: '#fff8ee', duration: 0.24 }, 49.08);
+      tl.from('#channel-card .registry-label', { x: 24, opacity: 0, duration: 0.3, ease: 'power2.out' }, 48.35);
+      tl.from('#channel-card .registry-title', { x: 24, opacity: 0, duration: 0.34, ease: 'expo.out' }, 48.48);
+      tl.from('#channel-card .registry-row', { x: 24, opacity: 0, stagger: 0.33, duration: 0.3, ease: 'expo.out' }, 49.62);
+      tl.from('#channel-card .registry-note', { y: 10, opacity: 0, duration: 0.3, ease: 'power2.out' }, 50.55);
+
+      // ---------- Scene 11: outro ----------
+      tl.from('#logo-mark', { scale: 0.3, rotation: -25, opacity: 0, duration: 0.5, ease: 'back.out(1.8)' }, 52.45);
+      tl.from('#brand-big', { y: 80, opacity: 0, duration: 0.42, ease: 'expo.out' }, 52.62);
+      tl.from('#brand-tag', { scale: 0.86, opacity: 0, duration: 0.36, ease: 'back.out(1.6)' }, 53.05);
+      tl.from('#brand-footer', { y: 16, opacity: 0, duration: 0.32, ease: 'power2.out' }, 53.45);
+      tl.from('#recap-strip', { y: 14, opacity: 0, duration: 0.3, ease: 'power2.out' }, 53.85);
+      tl.from('#final-stamp', { y: 14, rotation: -2, opacity: 0, duration: 0.3, ease: 'power2.out' }, 54.3);
+      tl.to('#brand-big', { scale: 1.015, duration: 0.34, ease: 'power2.out' }, 54.01);
+      tl.to('#brand-big', { scale: 1, duration: 0.4, ease: 'power2.inOut' }, 54.35);
+      tl.to('#brand-tag', { scale: 1.025, duration: 0.3, ease: 'power2.out' }, 54.85);
+      tl.to('#brand-tag', { scale: 1, duration: 0.35, ease: 'power2.inOut' }, 55.15);
+
+      // ---------- Transitions ----------
+      tl.fromTo('#wipe-1', { xPercent: -115 }, { xPercent: 115, duration: 0.6, ease: 'power3.inOut' }, 2.85);
+      tl.fromTo('#wipe-2', { xPercent: 115 }, { xPercent: -115, duration: 0.55, ease: 'power3.inOut' }, 6.95);
+      tl.fromTo('#wipe-3', { yPercent: -120 }, { yPercent: 120, duration: 0.55, ease: 'power4.inOut' }, 11.15);
+      tl.fromTo('#wipe-4', { xPercent: -115 }, { xPercent: 115, duration: 0.55, ease: 'power3.inOut' }, 16.15);
+      tl.fromTo('#wipe-5', { xPercent: 115 }, { xPercent: -115, duration: 0.55, ease: 'power3.inOut' }, 21.62);
+      tl.fromTo('#wipe-6', { yPercent: -120 }, { yPercent: 120, duration: 0.55, ease: 'power4.inOut' }, 27.22);
+      tl.fromTo('#wipe-7', { xPercent: -115 }, { xPercent: 115, duration: 0.55, ease: 'power3.inOut' }, 32.82);
+      tl.fromTo('#wipe-8', { xPercent: 115 }, { xPercent: -115, duration: 0.55, ease: 'power3.inOut' }, 38.42);
+      tl.fromTo('#wipe-9', { xPercent: -115 }, { xPercent: 115, duration: 0.55, ease: 'power3.inOut' }, 47.42);
+      tl.fromTo('#wipe-10', { yPercent: -120 }, { yPercent: 120, duration: 0.55, ease: 'power4.inOut' }, 52.22);
+
+      // ---------- Audio-reactive paper glow ----------
+      // beat-locked: final logo at 18.01s (strong cue)
+      // beat-grid: nodes at 3.55 / 4.10 / 4.64 / 5.19 / 5.74 / 6.28; cards at 8.22 / 8.73 / 9.29
+      (function audioReactive() {
+        const data = window.AUDIO_DATA;
+        if (!data) return;
+        for (let i = 0; i < data.rms.length; i++) {
+          const t = i / data.fps;
+          const rms = data.rms[i];
+          const bass = data.bass[i];
+          tl.call(function () {
+            gsap.set('#audio-glow', { scale: 1 + rms * 0.05, opacity: 0.22 + rms * 0.10 });
+            gsap.set('.paper-fill', { '--warmth': (0.55 + bass * 0.45).toFixed(3) });
+          }, [], t);
+        }
+      })();
+
+      window.__timelines['main'] = tl;
+      tl.seek(0);
+    </script>
+  </body>
+</html>
