@@ -53,10 +53,14 @@ app = FastAPI(
 
 app.state.settings = settings = get_settings()
 
+# The API is public and cookie-less, so credentials are only enabled when the operator has
+# pinned explicit origins. A wildcard origin must NOT be paired with credentials (browsers
+# reject `Access-Control-Allow-Origin: *` with `Allow-Credentials: true`), so it is disabled.
+cors_origins = settings.cors_origin_list
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origin_list,
-    allow_credentials=True,
+    allow_origins=cors_origins,
+    allow_credentials="*" not in cors_origins,
     allow_methods=["*"],
     allow_headers=["*"],
 )
