@@ -1,0 +1,22 @@
+# Local dependencies and generated build output
+**/node_modules/
+**/dist/
+**/.venv/
+**/venv/
+**/__pycache__/
+**/.pytest_cache/
+**/.ruff_cache/
+**/.mypy_cache/
+
+# Environment files, including local secret variants
+.env
+.env.*
+**/.env
+**/.env.*
+
+# Repository metadata
+.git/
+**/.git/
+
+# Untracked launch-video output
+/brag-output-*/

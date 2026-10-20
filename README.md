@@ -44,10 +44,11 @@ flowchart LR
 ## Prerequisites
 
 - [uv](https://docs.astral.sh/uv/) for the pinned Python environment
-- Node.js 22 or newer and npm
+- Node.js `22.22.3` and npm
 
-Python 3.12 is pinned in `.python-version`. `uv` can download that interpreter when it is not
-already installed locally.
+Python `3.12.11` is pinned in `.python-version`, and Node.js `22.22.3` is pinned in `.nvmrc`.
+`uv` can download the Python interpreter when it is not already installed locally; use a Node
+version manager that reads `.nvmrc` (for example, `nvm use`) for the frontend runtime.
 
 ## Setup
 
@@ -56,8 +57,11 @@ cp .env.example .env
 cd backend
 uv sync
 cd ../frontend
-npm install
+npm ci
 ```
+
+Both dependency lockfiles are committed: `backend/uv.lock` and `frontend/package-lock.json`.
+Use `npm ci`, rather than `npm install`, to reproduce the locked frontend dependency tree.
 
 The `.env` file is local-only and is ignored by git. API keys are optional for offline development;
 set `OPENAI_API_KEY` and `TAVILY_API_KEY` in `.env` to run the real integration check.
