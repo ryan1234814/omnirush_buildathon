@@ -82,14 +82,20 @@ async def stream_report(
         "timeout": timeout_seconds,
     }
     response = None
-    for attempt in range(2):
+    # Groq/OpenAI-compatible endpoints intermittently return transient 5xx/timeout statuses
+    # (e.g. "model overloaded") that succeed on an immediate retry. Retry those, plus 429, with
+    # a short backoff that stays inside the synthesis budget; raise on any other error.
+    transient_status_codes = {408, 425, 429, 500, 502, 503, 504}
+    max_attempts = 3
+    for attempt in range(max_attempts):
         try:
             response = await client.chat.completions.create(**request)
             break
         except Exception as exc:
-            if attempt == 1 or getattr(exc, "status_code", None) != 429:
+            is_transient = getattr(exc, "status_code", None) in transient_status_codes
+            if attempt == max_attempts - 1 or not is_transient:
                 raise
-            await asyncio.sleep(20.0)
+            await asyncio.sleep(2.0 * (attempt + 1))
     if response is None:
         raise RuntimeError("LLM synthesis did not return a stream")
     async for chunk in response:
