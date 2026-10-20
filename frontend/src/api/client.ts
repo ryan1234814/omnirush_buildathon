@@ -8,6 +8,8 @@ export type RunStage =
   | 'EXTRACTING'
   | 'RANKING'
   | 'SYNTHESIZING'
+  | 'SELF_EVALUATING'
+  | 'RESEARCH_ROUND'
   | 'RENDERING'
   | 'DONE'
   | 'FAILED'
@@ -73,6 +75,9 @@ export type ReportEventType =
   | 'source_skipped'
   | 'source_dead'
   | 'synthesis_partial'
+  | 'self_evaluated'
+  | 'research_round_started'
+  | 'research_round_completed'
   | 'quota_error'
   | 'quota_exceeded'
   | 'provider_quota_error'
@@ -150,6 +155,68 @@ export type HealthSnapshot = {
   mock_mode: boolean
 }
 
+export type FollowUpChatRequest = {
+  message: string
+  conversation_id?: string
+}
+
+export type FollowUpChatResponse = {
+  conversation_id?: string
+  answer: string
+  citations?: number[]
+  created_at?: string
+}
+
+export type ReportDiffChange = {
+  section: string
+  before: string | null
+  after: string | null
+  status?: 'added' | 'removed' | 'changed' | string
+}
+
+export type ReportDiff = {
+  base_run_id: string
+  compare_run_id: string
+  summary?: string
+  changes: ReportDiffChange[]
+}
+
+export type ReportFormat =
+  | 'markdown'
+  | 'pdf'
+  | 'html'
+  | 'text'
+  | 'json'
+  | 'executive-summary'
+  | 'blog'
+  | 'linkedin'
+  | 'marp'
+
+export type ScheduleFrequency = 'once' | 'daily' | 'weekly' | 'monthly'
+
+export type ScheduleRequest = {
+  topic: string
+  frequency: ScheduleFrequency
+  run_id?: string
+  next_run_at?: string
+}
+
+export type Schedule = ScheduleRequest & {
+  id: string
+  enabled: boolean
+  created_at: string
+}
+
+export type Notification = {
+  id: string
+  type: string
+  title: string
+  message: string
+  read: boolean
+  run_id?: string
+  created_at: string
+}
+
 export type ReportEventStreamOptions = {
   onEvent: (event: ReportEvent) => void
   onOpen?: () => void
@@ -209,6 +276,77 @@ export async function getHealth(): Promise<HealthSnapshot> {
   return requestJson<HealthSnapshot>(`${API_ROOT}/health`)
 }
 
+export async function sendFollowUpChat(runId: string, payload: FollowUpChatRequest): Promise<FollowUpChatResponse> {
+  return requestJson<FollowUpChatResponse>(`${API_ROOT}/reports/${encodeURIComponent(runId)}/chat`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+}
+
+export async function getReportDiff(baseRunId: string, compareRunId: string): Promise<ReportDiff> {
+  const query = new URLSearchParams({ compare_run_id: compareRunId })
+  return requestJson<ReportDiff>(`${API_ROOT}/reports/${encodeURIComponent(baseRunId)}/diff?${query.toString()}`)
+}
+
+const FORMAT_SUBPATHS: Record<ReportFormat, string> = {
+  markdown: 'report.md',
+  pdf: 'report.pdf',
+  html: 'report.html',
+  text: 'report.txt',
+  json: 'report.json',
+  'executive-summary': 'report/executive',
+  blog: 'report/blog',
+  linkedin: 'report/linkedin',
+  marp: 'report/marp',
+}
+
+export function getReportFormatUrl(runId: string, format: ReportFormat): string {
+  return `${API_ROOT}/reports/${encodeURIComponent(runId)}/${FORMAT_SUBPATHS[format]}`
+}
+
+export async function downloadReportFormat(runId: string, format: ReportFormat): Promise<Blob> {
+  const response = await fetch(getReportFormatUrl(runId, format))
+  if (!response.ok) {
+    const payload: unknown = await response.json().catch(() => null)
+    const detail =
+      typeof payload === 'object' && payload !== null && 'detail' in payload
+        ? String(payload.detail)
+        : `The ${format} export could not be downloaded.`
+    throw new ApiError(detail, response.status)
+  }
+  return response.blob()
+}
+
+export async function createSchedule(payload: ScheduleRequest): Promise<Schedule> {
+  return requestJson<Schedule>(`${API_ROOT}/schedules`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+}
+
+export async function listSchedules(): Promise<Schedule[]> {
+  return requestJson<Schedule[]>(`${API_ROOT}/schedules`)
+}
+
+export async function deleteSchedule(scheduleId: string): Promise<void> {
+  await requestJson<unknown>(`${API_ROOT}/schedules/${encodeURIComponent(scheduleId)}`, { method: 'DELETE' })
+}
+
+export async function listNotifications(unreadOnly = false): Promise<Notification[]> {
+  const query = unreadOnly ? '?unread=true' : ''
+  return requestJson<Notification[]>(`${API_ROOT}/notifications${query}`)
+}
+
+export async function markNotificationRead(notificationId: string): Promise<Notification> {
+  return requestJson<Notification>(`${API_ROOT}/notifications/${encodeURIComponent(notificationId)}`, {
+    method: 'PATCH',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ read: true }),
+  })
+}
+
 const REPORT_EVENT_TYPES: ReportEventType[] = [
   'stage_started',
   'stage_completed',
@@ -222,6 +360,9 @@ const REPORT_EVENT_TYPES: ReportEventType[] = [
   'source_skipped',
   'source_dead',
   'synthesis_partial',
+  'self_evaluated',
+  'research_round_started',
+  'research_round_completed',
   'quota_error',
   'quota_exceeded',
   'provider_quota_error',

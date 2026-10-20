@@ -15,7 +15,10 @@ class Settings(BaseSettings):
     llm_model: str = "gpt-4o-mini"
     tavily_api_key: str | None = None
     serper_api_key: str | None = None
-    search_provider: Literal["tavily", "serper", "mock"] = "tavily"
+    search_provider: Literal["tavily", "serper", "youtube", "mock"] = "tavily"
+    scrapling_fallback: bool = True
+    scrapling_timeout_seconds: float = Field(default=15.0, gt=0)
+    youtube_api_key: str | None = None
     mock_mode: bool = False
     top_k: int = Field(default=6, ge=1)
     synthesis_context_tokens: int = Field(default=3_000, ge=500)
@@ -27,6 +30,14 @@ class Settings(BaseSettings):
     synthesis_budget_seconds: float = Field(default=45.0, gt=0)
     total_budget_seconds: float = Field(default=85.0, gt=0)
     runs_dir: str = "data/runs"
+    scheduler_tick_seconds: float = Field(default=30.0, ge=1)
+    completion_webhook_url: str | None = None
+    notification_email_to: str | None = None
+    smtp_host: str | None = None
+    smtp_port: int = Field(default=587, ge=1, le=65535)
+    smtp_username: str | None = None
+    smtp_password: str | None = None
+    notification_email_from: str = "research-agent@localhost"
 
     model_config = SettingsConfigDict(
         # The documented .env lives at the repository root, while backend commands run from here.
@@ -50,6 +61,8 @@ class Settings(BaseSettings):
             return True
         if self.search_provider == "tavily":
             return bool(self.tavily_api_key)
+        if self.search_provider == "youtube":
+            return bool(self.youtube_api_key)
         return bool(self.serper_api_key)
 
 

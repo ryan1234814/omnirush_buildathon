@@ -1,8 +1,9 @@
-"""Report creation, snapshots, Markdown, and SSE endpoints."""
+"""Report creation, snapshots, Markdown, multi-format export, diff, and SSE endpoints."""
 
 from __future__ import annotations
 
 import asyncio
+import html
 import json
 import os
 import re
@@ -10,16 +11,26 @@ import uuid
 from datetime import UTC, datetime
 from pathlib import Path
 
+import markdown as markdown_lib
 from fastapi import APIRouter, Header, HTTPException, Query, Request, Response, status
 from fastapi.responses import FileResponse, StreamingResponse
 
 from app.models import ReportRun, TopicRequest
 from app.pdf.renderer import render_pdf
+from app.pipeline.diff import diff_reports
 from app.pipeline.orchestrator import run_pipeline
+from app.pipeline.renderers import RENDERERS
 from app.storage import save_snapshot
 
 router = APIRouter(prefix="/api/reports", tags=["reports"])
 _SAFE_RUN_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$")
+_KIND_MEDIA = {
+    "executive": ("text/markdown", "md"),
+    "blog": ("text/markdown", "md"),
+    "linkedin": ("text/markdown", "md"),
+    "marp": ("text/markdown", "md"),
+    "slides": ("text/markdown", "md"),
+}
 
 
 def _bus(request: Request):
@@ -47,7 +58,7 @@ async def create_report(payload: TopicRequest, request: Request) -> dict[str, st
     settings = _settings(request)
     await bus.register(run)
     save_snapshot(run, settings.runs_dir)
-    task = asyncio.create_task(run_pipeline(run.id, bus, settings))
+    task = asyncio.create_task(run_pipeline(run.id, bus, settings, request.app.state.report_tasks))
     tasks: set[object] = request.app.state.report_tasks
     tasks.add(task)
     task.add_done_callback(tasks.discard)
@@ -64,6 +75,22 @@ async def get_report(run_id: str, request: Request) -> ReportRun:
         raise HTTPException(status_code=404, detail="Report run not found") from exc
 
 
+async def _require_ready_report(request: Request, run_id: str) -> ReportRun:
+    """Load a snapshot and require an exportable (complete, non-partial) report."""
+
+    try:
+        snapshot = await _bus(request).get_snapshot(run_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail="Report run not found") from exc
+    if not _SAFE_RUN_ID.fullmatch(snapshot.id):
+        raise HTTPException(status_code=404, detail="Report run not found")
+    if not snapshot.report_md:
+        raise HTTPException(status_code=409, detail="Report is not ready")
+    if snapshot.partial:
+        raise HTTPException(status_code=409, detail="Partial reports cannot be exported")
+    return snapshot
+
+
 @router.get("/{run_id}/report.md")
 async def get_report_markdown(run_id: str, request: Request) -> Response:
     """Return the assembled Markdown report once available."""
@@ -75,6 +102,110 @@ async def get_report_markdown(run_id: str, request: Request) -> Response:
     if not snapshot.report_md:
         raise HTTPException(status_code=409, detail="Report is not ready")
     return Response(content=snapshot.report_md, media_type="text/markdown")
+
+
+@router.get("/{run_id}/report.html")
+async def get_report_html(run_id: str, request: Request) -> Response:
+    """Return the report rendered as a standalone HTML document."""
+
+    snapshot = await _require_ready_report(request, run_id)
+    body = markdown_lib.markdown(
+        html.escape(snapshot.report_md or ""),
+        extensions=["tables", "fenced_code"],
+        output_format="html5",
+    )
+    document = (
+        "<!doctype html><html><head><meta charset=\"utf-8\">"
+        f"<title>{html.escape(snapshot.topic)}</title></head><body>{body}</body></html>"
+    )
+    return Response(content=document, media_type="text/html")
+
+
+_MD_INLINE = re.compile(r"(\*\*|\*|`)")
+
+
+def _strip_markdown(report_md: str) -> str:
+    """Remove Markdown heading, list, emphasis, and citation markers."""
+
+    lines: list[str] = []
+    for line in report_md.splitlines():
+        line = re.sub(r"^#{1,6}\s+", "", line)
+        line = re.sub(r"^\s*[-*]\s+", "", line)
+        line = re.sub(r"\[(\d+)\]", "", line)
+        line = _MD_INLINE.sub("", line)
+        lines.append(line.rstrip())
+    text = "\n".join(lines)
+    return re.sub(r"\n{3,}", "\n\n", text).strip() + "\n"
+
+
+@router.get("/{run_id}/report.txt")
+async def get_report_text(run_id: str, request: Request) -> Response:
+    """Return the report as Markdown-stripped plain text."""
+
+    snapshot = await _require_ready_report(request, run_id)
+    return Response(content=_strip_markdown(snapshot.report_md or ""), media_type="text/plain")
+
+
+@router.get("/{run_id}/report.json")
+async def get_report_json(run_id: str, request: Request) -> Response:
+    """Return the report with its citation registry and stage timings as JSON."""
+
+    snapshot = await _require_ready_report(request, run_id)
+    payload = {
+        "id": snapshot.id,
+        "topic": snapshot.topic,
+        "created_at": snapshot.created_at.isoformat(),
+        "outcome": snapshot.outcome,
+        "report_md": snapshot.report_md,
+        "sources": [entry.model_dump(mode="json") for entry in snapshot.sources],
+        "stage_timings": {
+            stage: timing.elapsed_ms for stage, timing in snapshot.stage_timings.items()
+        },
+        "budget_status": snapshot.budget_status,
+        "total_elapsed_ms": snapshot.total_elapsed_ms,
+    }
+    return Response(
+        content=json.dumps(payload, indent=2) + "\n",
+        media_type="application/json",
+    )
+
+
+@router.get("/{run_id}/report/{kind}")
+async def get_report_kind(run_id: str, kind: str, request: Request) -> Response:
+    """Return one derived distribution format from the shared citation registry."""
+
+    renderer = RENDERERS.get(kind)
+    if renderer is None:
+        raise HTTPException(status_code=404, detail="Unknown report format")
+    snapshot = await _require_ready_report(request, run_id)
+    media_type, extension = _KIND_MEDIA[kind]
+    return Response(
+        content=renderer(snapshot.report_md or ""),
+        media_type=media_type,
+        headers={
+            "content-disposition": f'attachment; filename="{snapshot.id}.{extension}"',
+        },
+    )
+
+
+@router.get("/{run_id}/diff")
+async def get_report_diff(
+    run_id: str,
+    request: Request,
+    compare_run_id: str = Query(min_length=1, max_length=128),
+) -> dict[str, object]:
+    """Compare this run against an earlier completed run of the same topic."""
+
+    current = await _require_ready_report(request, run_id)
+    try:
+        previous = await _bus(request).get_snapshot(compare_run_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail="Comparison run not found") from exc
+    if not previous.report_md:
+        raise HTTPException(status_code=409, detail="Comparison report is not ready")
+    if previous.partial or current.partial:
+        raise HTTPException(status_code=409, detail="Partial reports cannot be compared")
+    return diff_reports(previous, current)
 
 
 def _pdf_cache_path(snapshot: ReportRun, runs_dir: str | Path) -> Path:
@@ -101,19 +232,8 @@ def _cache_pdf(path: Path, content: bytes) -> None:
 async def get_report_pdf(run_id: str, request: Request) -> FileResponse:
     """Return a cached PDF report, generating it after Markdown is available."""
 
-    try:
-        snapshot = await _bus(request).get_snapshot(run_id)
-    except KeyError as exc:
-        raise HTTPException(status_code=404, detail="Report run not found") from exc
-    if not snapshot.report_md:
-        raise HTTPException(status_code=409, detail="Report is not ready")
-    if snapshot.partial:
-        raise HTTPException(status_code=409, detail="Partial reports cannot be exported")
-
-    try:
-        cache_path = _pdf_cache_path(snapshot, _settings(request).runs_dir)
-    except ValueError as exc:
-        raise HTTPException(status_code=404, detail="Report run not found") from exc
+    snapshot = await _require_ready_report(request, run_id)
+    cache_path = _pdf_cache_path(snapshot, _settings(request).runs_dir)
 
     if not cache_path.is_file():
         _cache_pdf(cache_path, render_pdf(snapshot.report_md))

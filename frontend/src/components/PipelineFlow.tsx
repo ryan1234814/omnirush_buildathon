@@ -18,7 +18,12 @@ type PipelineFlowProps = {
 }
 
 function PipelineFlow({ stage }: PipelineFlowProps) {
-  const currentIndex = NODES.findIndex((node) => node.stage === stage)
+  // The self-evaluation and research-round stages happen between Synthesize and Render.
+  const stageOverrides: Partial<Record<RunStage, number>> = {
+    SELF_EVALUATING: 4,
+    RESEARCH_ROUND: 4,
+  }
+  const currentIndex = stage in stageOverrides ? stageOverrides[stage]! : NODES.findIndex((node) => node.stage === stage)
   const isDone = stage === 'DONE'
   const isFailed = stage === 'FAILED'
   const resolvedIndex = isDone ? NODES.length : currentIndex

@@ -12,24 +12,32 @@ from tavily import AsyncTavilyClient
 
 from app.config import Settings
 from app.events.bus import EventBus
-from app.models import ReportRun, Stage, StageTiming
+from app.models import ReportRun, SourceRegistry, Stage, StageTiming
+from app.notifications import (
+    record_run_notification,
+    schedule_completion_notifications,
+)
 from app.pipeline.citations import build_registry, validate_report
 from app.pipeline.extract import fetch_sources
 from app.pipeline.query_planner import QueryPlanner
 from app.pipeline.ranker import normalize_url, rank_sources
 from app.pipeline.report_md import assemble
+from app.pipeline.scrapling_search import ScraplingSearch
 from app.pipeline.search import (
+    FallbackSearch,
     MockSearch,
     SearchCallBudget,
     SearchError,
     SearchProvider,
     SearchResult,
     TavilySearch,
+    YouTubeTranscriptProvider,
 )
 from app.pipeline.synthesizer import stream_report
 from app.storage import save_snapshot
 
 logger = logging.getLogger(__name__)
+MAX_RESEARCH_ROUNDS = 1
 NO_SOURCES_MESSAGE = "No sources found. Try a different topic."
 PARTIAL_SYNTHESIS_NOTE = (
     "\n\n> **Partial report:** Synthesis stopped before completion. "
@@ -57,18 +65,41 @@ def _provider(
 
     if settings.mock_mode or settings.search_provider == "mock":
         return MockSearch(call_budget=call_budget), None
+    if settings.search_provider == "youtube":
+        return YouTubeTranscriptProvider(settings.youtube_api_key, call_budget=call_budget), None
     if settings.search_provider != "tavily" or not settings.tavily_api_key:
         raise SearchError("Tavily search is not configured")
     client = AsyncTavilyClient(api_key=settings.tavily_api_key)
-    return (
-        TavilySearch(
-            settings.tavily_api_key,
-            client=client,
-            retry_backoff_seconds=settings.search_retry_backoff_seconds,
-            call_budget=call_budget,
-        ),
-        client,
+    fallback_enabled = settings.scrapling_fallback
+    primary = TavilySearch(
+        settings.tavily_api_key,
+        client=client,
+        retry_backoff_seconds=settings.search_retry_backoff_seconds,
+        # When a fallback owns the budget, do not double-charge Tavily's attempts.
+        call_budget=None if fallback_enabled else call_budget,
     )
+    if not fallback_enabled:
+        return primary, client
+    provider: SearchProvider = FallbackSearch(
+        primary,
+        ScraplingSearch(timeout_seconds=settings.scrapling_timeout_seconds),
+        call_budget=call_budget,
+    )
+    return provider, client
+
+
+def evaluate_gaps(body: str, registry: SourceRegistry, topic: str) -> list[str]:
+    """Return deterministic, bounded gap reasons after a synthesis pass."""
+
+    normalized_topic = " ".join(topic.casefold().split())
+    gaps: list[str] = []
+    if normalized_topic in {"gap drill", "research gap drill"}:
+        gaps.append("the topic requested a second evidence pass")
+    if registry.entries and "[1]" not in body:
+        gaps.append("the synthesis did not cite the first source")
+    if "*(unverified)*" in body.casefold():
+        gaps.append("the synthesis marked a claim as unverified")
+    return gaps
 
 
 async def _persist(bus: EventBus, run_id: str, settings: Settings) -> ReportRun:
@@ -183,6 +214,7 @@ async def _finish_without_synthesis(
     message: str,
     event_type: str,
     pipeline_started: float,
+    tasks: set[object] | None = None,
 ) -> None:
     """Complete a run with an explicit empty-source outcome."""
 
@@ -213,9 +245,80 @@ async def _finish_without_synthesis(
             "max_search_calls": snapshot.max_search_calls,
         },
     )
+    record_run_notification(snapshot, settings)
+    if tasks is not None:
+        schedule_completion_notifications(snapshot, settings, tasks)
 
 
-async def run_pipeline(run_id: str, bus: EventBus, settings: Settings) -> None:
+async def _research_round(
+    run_id: str,
+    bus: EventBus,
+    settings: Settings,
+    provider: SearchProvider,
+    search_budget: SearchCallBudget,
+    queries: Sequence[str],
+    unique_results: list[SearchResult],
+    extracted: list,
+    tavily_client: AsyncTavilyClient | None,
+) -> bool:
+    """Run one gap-driven evidence pass and merge any new sources.
+
+    Returns True when previously unseen sources were added so the caller can
+    re-rank and re-synthesize against the merged source set.
+    """
+
+    seen_urls = {normalize_url(result.url) for result in unique_results}
+    extra_candidates = [
+        result
+        for result in await _search_all(provider, queries, max_calls=search_budget.remaining())
+        if normalize_url(result.url) not in seen_urls
+    ]
+    if not extra_candidates:
+        return False
+    merged = _unique_results(unique_results + extra_candidates)
+    unique_results[:] = merged
+
+    async def source_skipped(result: SearchResult, reason: str) -> None:
+        await bus.publish(
+            run_id,
+            "source_skipped",
+            {"url": result.url, "kind": "dead", "reason": reason},
+        )
+
+    new_sources = await fetch_sources(
+        extra_candidates,
+        tavily_client=tavily_client,
+        mock_mode=settings.mock_mode or settings.search_provider == "mock",
+        scrapling_fallback=settings.scrapling_fallback,
+        scrapling_timeout_seconds=settings.scrapling_timeout_seconds,
+        on_source_skipped=source_skipped,
+    )
+    if not new_sources:
+        return False
+    for source in new_sources:
+        await bus.publish(
+            run_id,
+            "source_fetched",
+            {
+                "url": source.url,
+                "ok": True,
+                "bytes": len(source.content.encode("utf-8")),
+                "round": 2,
+            },
+        )
+    extracted.extend(new_sources)
+    snapshot = await bus.get_snapshot(run_id)
+    snapshot.search_calls = search_budget.calls
+    snapshot.attempted_sources = len(unique_results)
+    snapshot.succeeded_sources = len(extracted)
+    await bus.update_snapshot(snapshot)
+    save_snapshot(snapshot, settings.runs_dir)
+    return True
+
+
+async def run_pipeline(
+    run_id: str, bus: EventBus, settings: Settings, tasks: set[object] | None = None
+) -> None:
     """Run every report stage and convert failures into a failed run snapshot."""
 
     active_stage = Stage.PLANNING
@@ -297,6 +400,7 @@ async def run_pipeline(run_id: str, bus: EventBus, settings: Settings) -> None:
                 message=NO_SOURCES_MESSAGE,
                 event_type="no_results_completed",
                 pipeline_started=pipeline_started,
+                tasks=tasks,
             )
             return
 
@@ -314,6 +418,8 @@ async def run_pipeline(run_id: str, bus: EventBus, settings: Settings) -> None:
             unique_results,
             tavily_client=tavily_client,
             mock_mode=settings.mock_mode or settings.search_provider == "mock",
+            scrapling_fallback=settings.scrapling_fallback,
+            scrapling_timeout_seconds=settings.scrapling_timeout_seconds,
             on_source_skipped=source_skipped,
         )
         extraction_snapshot = await bus.get_snapshot(run_id)
@@ -375,6 +481,7 @@ async def run_pipeline(run_id: str, bus: EventBus, settings: Settings) -> None:
                 message=NO_SOURCES_MESSAGE,
                 event_type="no_sources_completed",
                 pipeline_started=pipeline_started,
+                tasks=tasks,
             )
             return
 
@@ -434,6 +541,100 @@ async def run_pipeline(run_id: str, bus: EventBus, settings: Settings) -> None:
             pipeline_started=pipeline_started,
         )
 
+        gap_reasons = (
+            [] if synthesis_partial else evaluate_gaps(body, registry, snapshot.topic)
+        )
+        if gap_reasons:
+            gap_snapshot = await bus.get_snapshot(run_id)
+            gap_snapshot.gap_reasons = gap_reasons
+            await bus.update_snapshot(gap_snapshot)
+            await _persist(bus, run_id, settings)
+            await bus.publish(run_id, "self_evaluated", {"gaps": gap_reasons})
+        second_round = False
+        if gap_reasons and snapshot.research_rounds < MAX_RESEARCH_ROUNDS:
+            pre_round_sources = snapshot.succeeded_sources
+            active_stage = Stage.RESEARCH_ROUND
+            await _start_stage(bus, run_id, active_stage, settings, stage_started)
+            await bus.publish(run_id, "research_round_started", {"gaps": gap_reasons})
+            round_queries = [
+                f"{snapshot.topic} latest developments {reason}" for reason in gap_reasons[:2]
+            ]
+            try:
+                second_round = await _research_round(
+                    run_id,
+                    bus,
+                    settings,
+                    provider,
+                    search_budget,
+                    round_queries,
+                    unique_results,
+                    extracted,
+                    tavily_client,
+                )
+            except SearchError as exc:
+                logger.warning("Research round skipped for run %s (%s)", run_id, type(exc).__name__)
+            round_snapshot = await bus.get_snapshot(run_id)
+            if second_round:
+                round_snapshot.research_rounds = snapshot.research_rounds = (
+                    snapshot.research_rounds + 1
+                )
+            await bus.update_snapshot(round_snapshot)
+            await _complete_stage(
+                bus,
+                run_id,
+                active_stage,
+                settings,
+                {
+                    "gaps": gap_reasons,
+                    "new_sources": max(0, round_snapshot.succeeded_sources - pre_round_sources),
+                    "executed": second_round,
+                },
+                stage_started=stage_started,
+                pipeline_started=pipeline_started,
+            )
+            await bus.publish(
+                run_id,
+                "research_round_completed",
+                {"executed": second_round, "gap_count": len(gap_reasons)},
+            )
+            if second_round:
+                active_stage = Stage.SYNTHESIZING
+                await _start_stage(bus, run_id, active_stage, settings, stage_started)
+                ranked = rank_sources(extracted, top_k=settings.top_k)
+                registry = build_registry(
+                    ranked,
+                    max_context_tokens=settings.synthesis_context_tokens,
+                )
+                round_failed = False
+                chunks = []
+                try:
+                    async for token in stream_report(
+                        snapshot.topic,
+                        registry,
+                        client=client,
+                        model=settings.llm_model,
+                        mock_mode=settings.mock_mode,
+                        timeout_seconds=settings.synthesis_budget_seconds,
+                    ):
+                        chunks.append(token)
+                        await bus.publish(run_id, "report_token", {"token": token})
+                except Exception as exc:
+                    round_failed = True
+                    logger.warning(
+                        "Round-two synthesis failed for run %s (%s)", run_id, type(exc).__name__
+                    )
+                if not round_failed:
+                    body = "".join(chunks)
+                    body, second_removed = validate_report(body, registry)
+                    if second_removed:
+                        await bus.publish(
+                            run_id, "citations_removed", {"ids": second_removed}
+                        )
+                snapshot = await bus.get_snapshot(run_id)
+                snapshot.sources = registry.entries
+                await bus.update_snapshot(snapshot)
+                await _persist(bus, run_id, settings)
+
         active_stage = Stage.RENDERING
         await _start_stage(bus, run_id, active_stage, settings, stage_started)
         report = assemble(snapshot.topic, body, registry)
@@ -476,6 +677,9 @@ async def run_pipeline(run_id: str, bus: EventBus, settings: Settings) -> None:
                 "succeeded_sources": snapshot.succeeded_sources,
             },
         )
+        record_run_notification(snapshot, settings)
+        if tasks is not None:
+            schedule_completion_notifications(snapshot, settings, tasks)
         logger.info(
             "Report run completed: run_id=%s outcome=%s total_ms=%.1f search_calls=%d/%d",
             run_id,
@@ -503,6 +707,7 @@ async def run_pipeline(run_id: str, bus: EventBus, settings: Settings) -> None:
                 "run_failed",
                 {"stage": active_stage.value, "error": snapshot.error},
             )
+            record_run_notification(snapshot, settings)
         except Exception as persist_exc:
             logger.error(
                 "Could not persist failed report run %s (%s)",

@@ -14,6 +14,7 @@ import trafilatura
 from tavily import AsyncTavilyClient
 
 from app.mock.corpus import page_for_url
+from app.pipeline.scrapling_search import fetch_page_html
 from app.pipeline.search import SearchResult
 
 logger = logging.getLogger(__name__)
@@ -126,6 +127,41 @@ def _extract_trafilatura(html: str, url: str) -> dict[str, Any] | None:
     return payload if isinstance(payload, dict) else None
 
 
+def _source_from_payload(
+    result: SearchResult, payload: dict[str, Any], method: str
+) -> Source | None:
+    """Build a source from a trafilatura payload produced from any fetcher."""
+
+    content = _text(payload.get("text")) or _text(payload.get("raw_text"))
+    return _source_from_content(
+        result,
+        content,
+        method=method,
+        title=_text(payload.get("title")) or result.title,
+        trafilatura_score=_number(payload.get("score")),
+        has_title=bool(_text(payload.get("title"))),
+        has_author=bool(_text(payload.get("author"))),
+        has_date=bool(_text(payload.get("date"))),
+    )
+
+
+async def _fetch_with_scrapling(
+    result: SearchResult, timeout_seconds: float
+) -> tuple[Source | None, str | None]:
+    """Fetch a page through Scrapling and parse it when Tavily and HTTP both fail."""
+
+    html = await fetch_page_html(result.url, timeout_seconds=timeout_seconds)
+    if not html:
+        return None, None
+    payload = _extract_trafilatura(html, result.url)
+    if payload is None:
+        return None, None
+    source = _source_from_payload(result, payload, method="scrapling")
+    if source is None:
+        return None, None
+    return source, None
+
+
 async def _fetch_one(
     result: SearchResult,
     *,
@@ -134,6 +170,8 @@ async def _fetch_one(
     mock_mode: bool,
     tavily_timeout_seconds: float,
     http_timeout_seconds: float,
+    scrapling_fallback: bool = False,
+    scrapling_timeout_seconds: float = 15.0,
 ) -> tuple[Source | None, str | None]:
     """Extract one result, swallowing failures at the source boundary."""
 
@@ -172,21 +210,20 @@ async def _fetch_one(
         payload = _extract_trafilatura(response.text, result.url)
         if payload is None:
             raise ValueError("trafilatura returned no content")
-        content = _text(payload.get("text")) or _text(payload.get("raw_text"))
-        source = _source_from_content(
-            result,
-            content,
-            method="http",
-            title=_text(payload.get("title")) or result.title,
-            trafilatura_score=_number(payload.get("score")),
-            has_title=bool(_text(payload.get("title"))),
-            has_author=bool(_text(payload.get("author"))),
-            has_date=bool(_text(payload.get("date"))),
-        )
+        source = _source_from_payload(result, payload, method="http")
         if source is None:
             raise ValueError("trafilatura returned empty text")
         return source, None
     except Exception as exc:
+        if scrapling_fallback:
+            logger.warning(
+                "HTTP extraction failed (%s); trying Scrapling: %s",
+                type(exc).__name__,
+                result.url,
+            )
+            scrapling_source, _ = await _fetch_with_scrapling(result, scrapling_timeout_seconds)
+            if scrapling_source is not None:
+                return scrapling_source, None
         logger.warning(
             "Skipping source after extraction failure (%s): %s",
             type(exc).__name__,
@@ -203,6 +240,8 @@ async def fetch_sources(
     mock_mode: bool = False,
     tavily_timeout_seconds: float = 15.0,
     http_timeout_seconds: float = 10.0,
+    scrapling_fallback: bool = False,
+    scrapling_timeout_seconds: float = 15.0,
     on_source_skipped: Any | None = None,
 ) -> list[Source]:
     """Fetch all sources concurrently and skip individual failures safely."""
@@ -221,6 +260,8 @@ async def fetch_sources(
                     mock_mode=mock_mode,
                     tavily_timeout_seconds=tavily_timeout_seconds,
                     http_timeout_seconds=http_timeout_seconds,
+                    scrapling_fallback=scrapling_fallback,
+                    scrapling_timeout_seconds=scrapling_timeout_seconds,
                 )
                 for result in results
             )

@@ -8,7 +8,7 @@ progress, incremental Markdown rendering, source cards, refresh recovery, and on
 
 - Python 3.12, FastAPI, and Uvicorn
 - OpenAI-compatible API configuration through the `openai` SDK settings
-- Tavily or mock search providers for the Phase 2 integration seam
+- Tavily or mock search providers, with a Scrapling web-scraping fallback when Tavily fails
 - Vite, React, and TypeScript
 
 ## Prerequisites
@@ -71,6 +71,12 @@ Phase 3 extends the check with concurrent extraction, URL deduplication, quality
 `TOP_K` cap (default `6`). Tavily extraction has a 15-second timeout per source. Failed or empty
 Tavily extracts fall back to an HTTP fetch with a mobile user agent and a 10-second timeout, then
 `trafilatura`; an individual dead source is skipped without failing the run.
+
+When `SCRAPLING_FALLBACK=true` (the default) and Tavily errors, times out, or its call budget is
+exhausted, search continues by scraping DuckDuckGo with
+[Scrapling](https://github.com/D4Vinci/Scrapling). Scrapling also backs up extraction when both
+Tavily and the plain HTTP fetch fail, so a Tavily outage degrades to scraped evidence instead of an
+empty report. `SCRAPLING_TIMEOUT_SECONDS` bounds each scrape.
 
 Run the complete offline Phase 3 check:
 
@@ -165,6 +171,32 @@ uv run python -m scripts.latency_check --runs 5 --topic "quantum computing 2026"
 Use `docs/phase8-rehearsal.md` for the three-dress-rehearsal script, resilience talking points, and
 feature-freeze log. If a real run exceeds the target, first try `TOP_K=5`, a 1,200-word excerpt cap,
 and a shorter synthesis instruction before changing the demo flow.
+
+## Agent features
+
+Five agent capabilities build on a completed run. All of them work fully offline under
+`MOCK_MODE=true` with `SEARCH_PROVIDER=mock`:
+
+- **Refinement chat** — `POST /api/reports/{run_id}/chat` with `{message}` (or legacy `{prompt}`)
+  answers follow-up questions from the run's cached citation registry, reusing existing `[n]`
+  citations. Mock mode returns a deterministic grounded answer; real mode uses the configured LLM.
+  Conversation history is kept in memory per `conversation_id`.
+- **Multi-round research** — after synthesis the orchestrator self-evaluates coverage and, when
+  gaps remain (try the `gap drill` topic), issues a second gap-driven search round within the
+  shared `MAX_SEARCH_CALLS` budget, then re-ranks and re-synthesizes. The UI surfaces
+  `self_evaluated` and `research_round_*` events on the new `SELF_EVALUATING`/`RESEARCH_ROUND` stages.
+- **Scheduled reports** — `POST/GET/DELETE /api/schedules` manage recurring runs at `once`,
+  `hourly`, `daily`, `weekly`, `monthly`, or a five-field cron expression. A background tick loop
+  (`SCHEDULER_TICK_SECONDS`, default 30s) starts due runs; a `once` schedule auto-disables after it
+  fires. Requires a single uvicorn worker (the event bus is in-memory).
+- **Report diffing** — `GET /api/reports/{run_id}/diff?compare_run_id=...` returns per-section
+  changes (`added`/`removed`/`changed`) plus source churn, matching the frontend `ReportDiff` contract.
+- **Multi-format output** — alongside `/report.md` and `/report.pdf`, each run exports
+  `/report.html`, `/report.txt`, `/report.json`, and rendered `/report/{kind}` variants:
+  `executive`, `blog`, `linkedin`, and `marp` (slide deck).
+
+Completed runs also record in-app notifications (`GET/PATCH /api/notifications`) and can ping an
+optional `COMPLETION_WEBHOOK_URL` or send email via the SMTP settings in `.env.example`.
 
 ## Run
 

@@ -22,10 +22,14 @@ Return only the Markdown report, with no preamble or commentary.
 """
 
 
-def build_synthesis_user_prompt(topic: str, excerpts: str) -> str:
+def build_synthesis_user_prompt(
+    topic: str, excerpts: str, follow_up_prompt: str | None = None
+) -> str:
     """Build the user prompt containing only the bounded registry context."""
 
+    refinement = f"\nRefinement request: {follow_up_prompt}\n" if follow_up_prompt else ""
     return f"""Research topic: {topic}
+{refinement}
 
 Use only these source excerpts:
 

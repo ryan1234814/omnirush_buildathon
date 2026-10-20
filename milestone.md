@@ -138,7 +138,7 @@ Each phase is independently testable and ends with an **ACCEPTANCE CHECKPOINT �
 1. **Fixtures refresh**: curate `mock/fixtures/pages/` with 6 high-quality saved pages for the exact demo topic. Verify `MOCK_MODE=1` end-to-end with zero network (kill wifi and run it — this is the stage-insurance demo).
 2. Rate-limit + quota guard: `SearchProvider` wraps 429 with one retry after backoff; hard cap of `MAX_SEARCH_CALLS=8` per run logged on completion.
 3. Failure drills (each must degrade gracefully, not 500): search returns 0 results → "Try a different topic" state; LLM timeout mid-synthesis → partial report delivered with note; dead source → skipped event visible in UI.
-4. Latency budget check on real API with demo topic: planning ≤8 s, search ≤5 s, extract ≤25 s, synthesis ≤45 s ⇒ ≤~85 s total. If over: reduce `TOP_K` to 5, trim excerpt budget to 1,200 words, shorten report length instruction.
+4. Latency budget check on real API with demo topic: planning ≤8 s, search ≤5 s, extract ≤25 s, synthesis ≤45 s ⇒ ≤~85 s total. If over: reduce `TOP_K` to 5, trim excerpt budget to 1,200 words, shorten report length instruction.x
 5. 3 full dress rehearsals of the exact demo script (chips → run → narrate timeline → click citation → download PDF → switch to mock-mode "resilience" talking point). **48-hour feature freeze before demo.**
 
 **✅ Final acceptance:** 5 consecutive real-API runs + 2 mock runs, all complete, all citation-valid, worst-case ≤ 2 min.

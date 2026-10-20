@@ -31,6 +31,7 @@ async def stream_report(
     model: str = "",
     mock_mode: bool = False,
     timeout_seconds: float = 45.0,
+    follow_up_prompt: str | None = None,
 ) -> AsyncIterator[str]:
     """Yield report text chunks from the LLM or deterministic mock synthesizer."""
 
@@ -42,7 +43,11 @@ async def stream_report(
             )
             raise TimeoutError("mock synthesis timeout drill")
         if registry.entries:
-            summary = f"Research on **{topic}** is summarized from the supplied excerpts [1]."
+            focus = f" in response to **{follow_up_prompt}**" if follow_up_prompt else ""
+            summary = (
+                f"Research on **{topic}**{focus} is summarized "
+                "from the supplied excerpts [1]."
+            )
         else:
             summary = f"Research on **{topic}** lacks source support. *(unverified)*"
         chunks = [f"## Executive summary\n\n{summary}\n"]
@@ -69,6 +74,7 @@ async def stream_report(
                 "content": build_synthesis_user_prompt(
                     topic,
                     format_excerpts(registry.entries),
+                    follow_up_prompt,
                 ),
             },
         ],

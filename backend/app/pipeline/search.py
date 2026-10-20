@@ -4,13 +4,18 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Protocol
 
+import httpx
 from tavily import AsyncTavilyClient
 
 from app.mock.corpus import MockPage, load_corpus
+
+logger = logging.getLogger(__name__)
 
 
 class SearchError(RuntimeError):
@@ -37,6 +42,11 @@ class SearchCallBudget:
                 return False
             self.calls += 1
             return True
+
+    def remaining(self) -> int:
+        """Return how many attempts are left before the shared cap is full."""
+
+        return max(0, self.max_calls - self.calls)
 
 
 @dataclass(frozen=True, slots=True)
@@ -160,6 +170,145 @@ class TavilySearch:
         ][:max_results]
 
 
+class FallbackSearch:
+    """Use a secondary provider whenever the primary search fails or errors.
+
+    The primary attempt is charged against the shared call budget (so paid API
+    usage stays capped). The fallback is intended for free scraping, so it is
+    still allowed to answer once the primary budget is exhausted.
+    """
+
+    def __init__(
+        self,
+        primary: SearchProvider,
+        fallback: SearchProvider,
+        *,
+        call_budget: SearchCallBudget | None = None,
+        fallback_on_empty: bool = False,
+    ) -> None:
+        self._primary = primary
+        self._fallback = fallback
+        self._call_budget = call_budget
+        self._fallback_on_empty = fallback_on_empty
+
+    async def search(self, query: str, max_results: int) -> list[SearchResult]:
+        """Return primary results, or Scrapling results when the primary fails."""
+
+        if not query.strip() or max_results < 1:
+            return []
+        if self._call_budget is not None and not await self._call_budget.reserve():
+            logger.info("Primary search budget exhausted; using fallback for %r", query)
+            return await self._fallback.search(query, max_results)
+        try:
+            results = await self._primary.search(query, max_results)
+        except SearchError as exc:
+            logger.warning(
+                "Primary search failed (%s); using fallback for %r", type(exc).__name__, query
+            )
+            return await self._fallback.search(query, max_results)
+        if results or not self._fallback_on_empty:
+            return results
+        return await self._fallback.search(query, max_results)
+
+
+TranscriptLoader = Callable[[str], Awaitable[str]]
+
+
+class YouTubeTranscriptProvider:
+    """Search YouTube and attach transcripts through an async-swappable loader.
+
+    The loader seam keeps tests and deployments that use a different transcript service
+    independent of the Google API. The optional default loader uses
+    ``youtube_transcript_api`` when it is installed; missing credentials or that optional
+    package are reported as provider errors rather than crashing application startup.
+    """
+
+    def __init__(
+        self,
+        api_key: str | None,
+        *,
+        transcript_loader: TranscriptLoader | None = None,
+        timeout_seconds: float = 10.0,
+        call_budget: SearchCallBudget | None = None,
+    ) -> None:
+        if not api_key:
+            raise SearchConfigurationError(
+                "YouTube search is not configured: YOUTUBE_API_KEY is missing"
+            )
+        self._api_key = api_key
+        self._transcript_loader = transcript_loader or self._load_transcript
+        self._timeout_seconds = timeout_seconds
+        self._call_budget = call_budget
+
+    async def _load_transcript(self, video_id: str) -> str:
+        """Load a transcript without making the synchronous library block the loop."""
+
+        try:
+            from youtube_transcript_api import YouTubeTranscriptApi
+        except ImportError as exc:
+            raise SearchError(
+                "YouTube transcripts require the optional youtube-transcript-api package"
+            ) from exc
+
+        def read_transcript() -> str:
+            transcript = YouTubeTranscriptApi.get_transcript(video_id)
+            return " ".join(str(item.get("text", "")) for item in transcript).strip()
+
+        return await asyncio.to_thread(read_transcript)
+
+    async def search(self, query: str, max_results: int) -> list[SearchResult]:
+        """Return transcript-backed YouTube videos for a query."""
+
+        if not query.strip() or max_results < 1:
+            return []
+        if self._call_budget is not None and not await self._call_budget.reserve():
+            return []
+        params = {
+            "part": "snippet",
+            "q": query,
+            "type": "video",
+            "maxResults": min(max_results, 50),
+            "key": self._api_key,
+        }
+        try:
+            async with httpx.AsyncClient(timeout=self._timeout_seconds) as client:
+                response = await client.get(
+                    "https://www.googleapis.com/youtube/v3/search", params=params
+                )
+                response.raise_for_status()
+                payload = response.json()
+        except (httpx.HTTPError, ValueError) as exc:
+            raise SearchError("YouTube search failed; check the API key and status") from exc
+        items = payload.get("items") if isinstance(payload, dict) else None
+        if not isinstance(items, list):
+            raise SearchError("YouTube returned an invalid search response")
+        results: list[SearchResult] = []
+        for item in items:
+            video_id = ((item.get("id") or {}).get("videoId") if isinstance(item, dict) else None)
+            snippet = item.get("snippet", {}) if isinstance(item, dict) else {}
+            if not video_id or not isinstance(snippet, dict):
+                continue
+            try:
+                transcript = await self._transcript_loader(str(video_id))
+            except SearchError:
+                raise
+            except Exception as exc:
+                raise SearchError("YouTube transcript ingestion failed") from exc
+            if not transcript.strip():
+                continue
+            results.append(
+                SearchResult(
+                    title=_as_text(snippet.get("title"), f"YouTube video {video_id}"),
+                    url=f"https://www.youtube.com/watch?v={video_id}",
+                    content=transcript,
+                    score=1.0 - len(results) / max(1, len(items)),
+                    published_date=_as_text(snippet.get("publishedAt")) or None,
+                    query=query,
+                )
+            )
+        return results[:max_results]
+
+
 class MockSearch:
     """Deterministic search provider backed by saved local pages."""
 
@@ -217,11 +366,11 @@ class MockSearch:
                 )
             ][:max_results]
         if self._pages:
-            if normalized_query not in {
-                "quantum computing 2026",
-                "quantum computing",
-                "synthesis timeout drill",
-            }:
+            # Corpus pages answer any query built around the saved topic, which also
+            # covers second research-round queries that extend the original topic.
+            if not normalized_query.startswith(
+                ("quantum", "gap drill", "research gap", "synthesis timeout")
+            ):
                 return []
             return [
                 SearchResult(

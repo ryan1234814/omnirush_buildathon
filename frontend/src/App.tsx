@@ -18,6 +18,7 @@ import CitationHeatmap from './components/CitationHeatmap'
 import CommandPalette, { type CommandItem } from './components/CommandPalette'
 import EventTicker, { type ActivityItem } from './components/EventTicker'
 import RecentRuns, { type HistoryEntry } from './components/RecentRuns'
+import ReportTools from './components/ReportTools'
 import { LatencyBudgetPanel, RunFailureNotice, type RunFailureDetails, ZeroResultsNotice } from './components/RunStateNotices'
 import PipelineFlow from './components/PipelineFlow'
 import SourceIntelligence from './components/SourceIntelligence'
@@ -806,6 +807,7 @@ function App() {
             ) : report || partialReport ? (
               <>
                 <ReportView report={report} sources={sources} isStreaming={status === 'running'} isPartial={partialReport} partialReason={partialReason} />
+                {runId && <ReportTools key={runId} runId={runId} topic={topic} history={history} />}
                 {status === 'done' && runId && !partialReport && <PdfDownload runId={runId} />}
                 {partialReport && <p className="pdf-unavailable" role="status">PDF export is unavailable until the report is complete. You can review the partial Markdown and citations above.</p>}
                 <div className="page-cross-links">

@@ -25,7 +25,9 @@ from app.config import Settings, get_settings
 from app.pipeline.extract import fetch_sources
 from app.pipeline.query_planner import QueryPlanner
 from app.pipeline.ranker import normalize_url, rank_sources
+from app.pipeline.scrapling_search import ScraplingSearch
 from app.pipeline.search import (
+    FallbackSearch,
     MockSearch,
     SearchConfigurationError,
     SearchError,
@@ -74,7 +76,13 @@ def _provider(settings: Settings) -> tuple[SearchProvider, AsyncTavilyClient | N
     if not settings.tavily_api_key:
         raise SearchConfigurationError("Tavily search is not configured: TAVILY_API_KEY is missing")
     client = AsyncTavilyClient(api_key=settings.tavily_api_key)
-    return TavilySearch(settings.tavily_api_key, client=client), client
+    primary = TavilySearch(settings.tavily_api_key, client=client)
+    if not settings.scrapling_fallback:
+        return primary, client
+    provider: SearchProvider = FallbackSearch(
+        primary, ScraplingSearch(timeout_seconds=settings.scrapling_timeout_seconds)
+    )
+    return provider, client
 
 
 async def _search_all(
