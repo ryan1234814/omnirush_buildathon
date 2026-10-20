@@ -31,6 +31,10 @@ class Settings(BaseSettings):
     total_budget_seconds: float = Field(default=85.0, gt=0)
     runs_dir: str = "data/runs"
     static_dir: str | None = None
+    # Comma-separated browser origins allowed to call the API cross-origin, e.g. the Vercel
+    # frontend deployed alongside this backend. "*" allows any origin (credentials are then
+    # ignored by the CORS middleware, which is fine: the API uses no cookies).
+    cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
     scheduler_tick_seconds: float = Field(default=30.0, ge=1)
     completion_webhook_url: str | None = None
     notification_email_to: str | None = None
@@ -47,6 +51,12 @@ class Settings(BaseSettings):
         case_sensitive=False,
         extra="ignore",
     )
+
+    @property
+    def cors_origin_list(self) -> list[str]:
+        """Return the allowed CORS origins parsed from the comma-separated setting."""
+
+        return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
 
     @property
     def llm_configured(self) -> bool:

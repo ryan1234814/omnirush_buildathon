@@ -1,4 +1,7 @@
-const API_ROOT = '/api'
+// VITE_API_BASE points the deployed UI at an externally hosted API (e.g. the Render backend).
+// Unset (dev/proxy setups) falls back to same-origin /api, served by the Vite dev proxy.
+const API_BASE_URL = ((import.meta.env.VITE_API_BASE as string | undefined) ?? '').replace(/\/+$/, '')
+const API_ROOT = `${API_BASE_URL}/api`
 const MAX_RECONNECT_ATTEMPTS = 3
 
 export type RunStatus = 'queued' | 'running' | 'completed' | 'failed'
