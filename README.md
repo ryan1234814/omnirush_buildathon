@@ -1,3 +1,11 @@
+---
+title: Omnirush
+emoji: "🚀"
+colorFrom: indigo
+colorTo: yellow
+sdk: docker
+---
+
 # One-Click Research Report Agent
 
 Type a topic, watch an agent research the web, and receive a professional report with
