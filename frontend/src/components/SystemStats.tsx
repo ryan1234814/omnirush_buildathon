@@ -1,4 +1,5 @@
-import type { HealthSnapshot } from '../api/client'
+import type { HealthSnapshot, RunIntegrity } from '../api/client'
+import IntegrityBadge from './IntegrityBadge'
 
 type SystemStatsProps = {
   health: HealthSnapshot | null
@@ -11,6 +12,7 @@ type SystemStatsProps = {
   eventCount: number
   elapsed: string
   reportLength: number
+  integrity: RunIntegrity | null
 }
 
 function Badge({ ok, children }: { ok: boolean; children: string }) {
@@ -28,6 +30,7 @@ function SystemStats({
   eventCount,
   elapsed,
   reportLength,
+  integrity,
 }: SystemStatsProps) {
   return (
     <section className="dashboard-panel system-panel" aria-labelledby="system-title">
@@ -42,6 +45,7 @@ function SystemStats({
         <Badge ok={!healthError}>{healthError ? 'API OFFLINE' : 'API ONLINE'}</Badge>
         {health && <Badge ok={health.mock_mode}>{health.mock_mode ? 'MOCK MODE' : 'LIVE PROVIDERS'}</Badge>}
       </div>
+      <IntegrityBadge integrity={integrity} />
       <div className="stats-grid">
         <div className="stat-cell"><span>Run state</span><strong>{status.toUpperCase()}</strong></div>
         <div className="stat-cell"><span>Current stage</span><strong>{stage}</strong></div>

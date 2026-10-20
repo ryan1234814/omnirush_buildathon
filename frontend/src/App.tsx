@@ -7,6 +7,7 @@ import {
   type ReportEvent,
   type HealthSnapshot,
   type ReportSnapshot,
+  type RunIntegrity,
   ReportEventStream,
   type RunStage,
 } from './api/client'
@@ -203,6 +204,7 @@ function App() {
   const [fetchedSources, setFetchedSources] = useState<FetchedSource[]>([])
   const [eventCount, setEventCount] = useState(0)
   const [report, setReport] = useState('')
+  const [integrity, setIntegrity] = useState<RunIntegrity | null>(null)
   const [sources, setSources] = useState<ReportSnapshot['sources']>([])
   const [noResults, setNoResults] = useState(false)
   const [partialReport, setPartialReport] = useState(false)
@@ -279,6 +281,18 @@ function App() {
       setPartialReason(snapshot.incomplete_reason ?? snapshot.message ?? '')
     }
     setError(snapshot.error ?? '')
+    if ('citations_valid' in snapshot && 'citations_removed' in snapshot) {
+      setIntegrity((current) => ({
+        ...(current ?? {}),
+        citationsValid: snapshot.citations_valid ?? 0,
+        citationsRemoved: snapshot.citations_removed ?? 0,
+        outputTokenEstimate: snapshot.output_token_estimate ?? current?.outputTokenEstimate,
+        searchCalls: snapshot.search_calls ?? current?.searchCalls,
+        maxSearchCalls: snapshot.max_search_calls ?? current?.maxSearchCalls,
+        succeededSources: succeeded ?? current?.succeededSources,
+        attemptedSources: attempted ?? current?.attemptedSources,
+      }))
+    }
     setFailure(snapshot.status === 'failed' && snapshot.error ? failureDetails(snapshot.error) : null)
     const snapshotRecord = snapshot as unknown as Record<string, unknown>
     const hasTelemetryFields = 'latency_ms' in snapshot || 'latency_budget_ms' in snapshot || 'budget_exceeded' in snapshot || 'metrics' in snapshot
@@ -389,6 +403,20 @@ function App() {
     if (incoming.type === 'report_token' && !hydratedReport.current && payload.token) {
       setReport((current) => current + payload.token)
     }
+    if (incoming.type === 'report_evaluated') {
+      setIntegrity({
+        citationsValid: payload.citations_valid ?? 0,
+        citationsRemoved: payload.citations_removed ?? 0,
+        contextTokenEstimate: payload.context_token_estimate,
+        outputTokenEstimate: payload.output_token_estimate,
+        searchCalls: payload.search_calls,
+        maxSearchCalls: payload.max_search_calls,
+        succeededSources: payload.succeeded_sources,
+        attemptedSources: payload.attempted_sources,
+        budgetStatus: payload.budget_status,
+        mockMode: payload.mock_mode,
+      })
+    }
     if (incoming.type === 'run_completed') {
       closeStream()
       sound.play('complete')
@@ -496,6 +524,7 @@ function App() {
         setSourceTotal(null)
         setFetchedSources([])
         setReport('')
+        setIntegrity(null)
         hydratedReport.current = false
         connectToRun(id)
       }
@@ -610,6 +639,7 @@ function App() {
     setFetchedSources([])
     setEventCount(0)
     setReport('')
+    setIntegrity(null)
     setSources([])
     setNoResults(false)
     setPartialReport(false)
@@ -664,6 +694,7 @@ function App() {
       setPartialReport(false)
       setPartialReason('')
       setReport('')
+      setIntegrity(null)
       setSources([])
     }
     resetToComposer()
@@ -787,6 +818,7 @@ function App() {
                 eventCount={eventCount}
                 elapsed={formatDuration(elapsedSeconds)}
                 reportLength={report.length}
+                integrity={integrity}
               />
               <RecentRuns entries={history} activeId={runId} onSelect={(id) => void selectRun(id)} onClear={() => { setHistory([]); saveHistory([]) }} />
               <CapabilitiesPanel onUseExample={(example) => { setTopic(example); navigateTo('control') }} />

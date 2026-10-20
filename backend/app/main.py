@@ -7,6 +7,7 @@ from collections.abc import AsyncIterator
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from app.api.health import router as health_router
 from app.api.notifications import router as notifications_router
@@ -73,3 +74,8 @@ app.include_router(reports_router)
 app.include_router(refinement_router)
 app.include_router(schedules_router)
 app.include_router(notifications_router)
+
+# The container copies the built UI to /app/frontend-dist; locally STATIC_DIR opts the
+# API into serving a production build. Routers are registered above, so /api/* keeps priority.
+if app.state.settings.static_dir:
+    app.mount("/", StaticFiles(directory=app.state.settings.static_dir, html=True), name="static")

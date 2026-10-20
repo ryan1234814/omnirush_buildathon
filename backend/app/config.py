@@ -30,6 +30,7 @@ class Settings(BaseSettings):
     synthesis_budget_seconds: float = Field(default=45.0, gt=0)
     total_budget_seconds: float = Field(default=85.0, gt=0)
     runs_dir: str = "data/runs"
+    static_dir: str | None = None
     scheduler_tick_seconds: float = Field(default=30.0, ge=1)
     completion_webhook_url: str | None = None
     notification_email_to: str | None = None

@@ -31,5 +31,7 @@ RUN pip install --no-cache-dir uv==0.12.3 \
 COPY backend/app /app/backend/app
 
 WORKDIR /app/backend
+# The API serves the built frontend from the copied artifact, making the container the full app.
+ENV STATIC_DIR=/app/frontend-dist
 EXPOSE 8000
 CMD ["/app/backend/.venv/bin/uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

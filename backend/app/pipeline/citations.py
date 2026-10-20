@@ -27,6 +27,12 @@ def _estimate_tokens(text: str) -> int:
     return ceil(len(_clean_words(text)) / _WORDS_PER_TOKEN)
 
 
+def estimate_tokens(text: str) -> int:
+    """Public word-based token estimate used for run telemetry payloads."""
+
+    return _estimate_tokens(text)
+
+
 def build_registry(
     sources: Sequence[Source],
     *,
@@ -60,6 +66,12 @@ def build_registry(
 
     used_tokens = sum(_estimate_tokens(entry.excerpt) for entry in entries)
     return SourceRegistry(entries=entries, context_token_estimate=used_tokens)
+
+
+def count_citations(md: str) -> int:
+    """Count every inline ``[n]`` citation marker remaining in a validated report."""
+
+    return len(_CITATION_RE.findall(md))
 
 
 def validate_report(md: str, registry: SourceRegistry) -> tuple[str, list[int]]:

@@ -191,6 +191,9 @@ class ReportRun(BaseModel):
     succeeded_sources: int = Field(default=0, ge=0)
     research_rounds: int = Field(default=0, ge=0, le=1)
     gap_reasons: list[str] = Field(default_factory=list)
+    citations_valid: int = Field(default=0, ge=0)
+    citations_removed: int = Field(default=0, ge=0)
+    output_token_estimate: int = Field(default=0, ge=0)
 
 
 class RunEvent(BaseModel):

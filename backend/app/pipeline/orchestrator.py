@@ -17,7 +17,12 @@ from app.notifications import (
     record_run_notification,
     schedule_completion_notifications,
 )
-from app.pipeline.citations import build_registry, validate_report
+from app.pipeline.citations import (
+    build_registry,
+    count_citations,
+    estimate_tokens,
+    validate_report,
+)
 from app.pipeline.extract import fetch_sources
 from app.pipeline.query_planner import QueryPlanner
 from app.pipeline.ranker import normalize_url, rank_sources
@@ -528,6 +533,10 @@ async def run_pipeline(
         body, removed_cites = validate_report(raw_body, registry)
         if removed_cites:
             await bus.publish(run_id, "citations_removed", {"ids": removed_cites})
+        citation_snapshot = await bus.get_snapshot(run_id)
+        citation_snapshot.citations_valid = count_citations(body)
+        citation_snapshot.citations_removed = len(removed_cites)
+        await bus.update_snapshot(citation_snapshot)
         await _complete_stage(
             bus,
             run_id,
@@ -632,6 +641,9 @@ async def run_pipeline(
                         )
                 snapshot = await bus.get_snapshot(run_id)
                 snapshot.sources = registry.entries
+                if not round_failed:
+                    snapshot.citations_valid = count_citations(body)
+                    snapshot.citations_removed = len(second_removed)
                 await bus.update_snapshot(snapshot)
                 await _persist(bus, run_id, settings)
 
@@ -660,8 +672,25 @@ async def run_pipeline(
         snapshot.partial = synthesis_partial
         snapshot.total_elapsed_ms = round(max(0.0, time.monotonic() - pipeline_started) * 1000, 3)
         snapshot.budget_status = _budget_status(snapshot, settings.total_budget_seconds)
+        snapshot.output_token_estimate = estimate_tokens(snapshot.report_md or "")
         await bus.update_snapshot(snapshot)
         save_snapshot(snapshot, settings.runs_dir)
+        await bus.publish(
+            run_id,
+            "report_evaluated",
+            {
+                "citations_valid": snapshot.citations_valid,
+                "citations_removed": snapshot.citations_removed,
+                "context_token_estimate": registry.context_token_estimate,
+                "output_token_estimate": snapshot.output_token_estimate,
+                "search_calls": snapshot.search_calls,
+                "max_search_calls": snapshot.max_search_calls,
+                "succeeded_sources": snapshot.succeeded_sources,
+                "attempted_sources": snapshot.attempted_sources,
+                "budget_status": snapshot.budget_status,
+                "mock_mode": settings.mock_mode or settings.search_provider == "mock",
+            },
+        )
         await bus.publish(
             run_id,
             "run_completed",

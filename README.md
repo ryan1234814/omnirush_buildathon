@@ -3,6 +3,36 @@
 Type a topic, watch an agent research the web, and receive a professional report with
 deterministic inline citations. The browser UI is a live mission-control view with replayable
 progress, incremental Markdown rendering, source cards, refresh recovery, and one-click PDF export.
+On completion the dashboard shows a citation-integrity badge (validated vs. hallucinated
+removed) and per-run cost/quota telemetry (search calls, token estimates, source success rate).
+
+## Architecture
+
+```mermaid
+flowchart LR
+    topic[Topic] --> planner[Query planner]
+    planner --> search[Search provider<br/>Tavily / Serper / YouTube / mock]
+    search --> extract[Parallel extraction<br/>Tavily extract + HTTP/Scrapling fallback]
+    extract --> rank[Dedupe + ranker]
+    rank --> registry[Citation registry]
+    registry --> synth[Streaming synthesis]
+    synth --> validate[Citation validator<br/>strips unknown citations]
+    validate --> report[Markdown report + PDF/HTML/TXT/JSON exports]
+    report --> gap[Self-evaluation<br/>gap-driven research round]
+    gap -.re-rank/re-synthesize.-> registry
+    validate --> bus[(Event bus +<br/>JSON snapshots)]
+    bus -->|SSE replay| ui[Mission-control UI]
+    bus --> sched[Scheduled runs] --> topic
+```
+
+## Demo in 60 seconds
+
+1. `make phase8-check` proves the offline pipeline, then start the mock backend and UI (see Run).
+2. Click the **Quantum computing 2026** chip → narrate the stage rail as it lights up.
+3. Point at the **citation-integrity badge** ("N validated / 0 hallucinated") and the quota
+   telemetry (search calls, ≈ tokens) on completion — the agent proves its own ground truth.
+4. Capstone: run the same topic again, open **Compare runs** (diff), ask a follow-up in
+   **Refinement chat**, and download the PDF.
 
 ## Stack
 
@@ -238,18 +268,25 @@ cd frontend && npm run build
 
 ## Container
 
-Build and run the API container with:
+The container builds the frontend, serves it from the FastAPI app (`STATIC_DIR=/app/frontend-dist`
+is set in the image), and exposes the same API on port 8000 — one container is the whole app:
 
 ```sh
 docker build -t omnirush-report-agent .
 docker run --rm -p 8000:8000 --env-file .env omnirush-report-agent
 ```
 
-The container exposes the same health endpoint on port 8000. The frontend remains a separate
-Vite development server during Phase 1.
-
 ## Deploy
 
-Build the frontend with `npm run build`, deploy `frontend/dist` to a static host, and deploy the
-FastAPI container (or the `backend` package with Uvicorn) to a Python 3.12 service. Configure the
-same environment variables from `.env.example` in the service's secret manager.
+With Docker Compose (recommended, release-equivalent PDF libraries included):
+
+```sh
+make docker-up   # builds the image, starts the app on http://localhost:8000
+```
+
+`docker-compose.yml` mounts `./backend/data/runs` for snapshot persistence and health-checks
+`/api/health`. Keep one service instance: the event bus and scheduler are in-process.
+
+Without Docker: build the frontend with `npm run build`, deploy `frontend/dist` to a static host,
+and deploy the FastAPI container (or the `backend` package with Uvicorn) to a Python 3.12 service.
+Configure the same environment variables from `.env.example` in the service's secret manager.

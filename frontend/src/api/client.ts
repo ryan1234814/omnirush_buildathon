@@ -44,6 +44,9 @@ export type ReportSnapshot = {
   sources_succeeded?: number
   attempted?: number
   succeeded?: number
+  citations_valid?: number
+  citations_removed?: number
+  output_token_estimate?: number
   search_calls?: number
   max_search_calls?: number
   latency_ms?: number
@@ -62,6 +65,20 @@ export type RunTelemetry = {
   [key: string]: unknown
 }
 
+/** Citation-integrity and cost telemetry published by `report_evaluated`. */
+export type RunIntegrity = {
+  citationsValid: number
+  citationsRemoved: number
+  contextTokenEstimate?: number
+  outputTokenEstimate?: number
+  searchCalls?: number
+  maxSearchCalls?: number
+  succeededSources?: number
+  attemptedSources?: number
+  budgetStatus?: string
+  mockMode?: boolean
+}
+
 export type ReportEventType =
   | 'stage_started'
   | 'stage_completed'
@@ -76,6 +93,7 @@ export type ReportEventType =
   | 'source_dead'
   | 'synthesis_partial'
   | 'self_evaluated'
+  | 'report_evaluated'
   | 'research_round_started'
   | 'research_round_completed'
   | 'quota_error'
@@ -137,6 +155,13 @@ export type ReportEventPayload = {
   sub_queries?: string[]
   ids?: number[]
   removed_citations?: number
+  citations_valid?: number
+  citations_removed?: number
+  context_token_estimate?: number
+  output_token_estimate?: number
+  search_calls?: number
+  max_search_calls?: number
+  mock_mode?: boolean
   [key: string]: unknown
 }
 
@@ -361,6 +386,7 @@ const REPORT_EVENT_TYPES: ReportEventType[] = [
   'source_dead',
   'synthesis_partial',
   'self_evaluated',
+  'report_evaluated',
   'research_round_started',
   'research_round_completed',
   'quota_error',

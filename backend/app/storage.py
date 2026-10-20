@@ -38,8 +38,11 @@ def load_snapshots(runs_dir: str | Path) -> list[ReportRun]:
     directory = Path(runs_dir)
     if not directory.exists():
         return []
+    reserved = {_schedules_path(directory).name, _notifications_path(directory).name}
     snapshots: list[ReportRun] = []
     for path in sorted(directory.glob("*.json")):
+        if path.name in reserved:
+            continue
         try:
             snapshots.append(ReportRun.model_validate_json(path.read_text(encoding="utf-8")))
         except (OSError, ValueError) as exc:

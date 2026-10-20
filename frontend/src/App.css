@@ -1207,6 +1207,31 @@ h3 {
   color: #ffb1b1;
 }
 
+.stat-badge.warn {
+  border-color: #8a6d3b;
+  color: #ffd479;
+}
+
+.integrity-block {
+  margin-top: 12px;
+}
+
+.integrity-callouts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.integrity-callouts li {
+  color: #91a2b4;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 0.64rem;
+  letter-spacing: 0.05em;
+}
+
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);

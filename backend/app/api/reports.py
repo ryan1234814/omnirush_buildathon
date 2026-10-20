@@ -17,6 +17,7 @@ from fastapi.responses import FileResponse, StreamingResponse
 
 from app.models import ReportRun, TopicRequest
 from app.pdf.renderer import render_pdf
+from app.pipeline.citations import estimate_tokens
 from app.pipeline.diff import diff_reports
 from app.pipeline.orchestrator import run_pipeline
 from app.pipeline.renderers import RENDERERS
@@ -163,6 +164,14 @@ async def get_report_json(run_id: str, request: Request) -> Response:
         },
         "budget_status": snapshot.budget_status,
         "total_elapsed_ms": snapshot.total_elapsed_ms,
+        "citations_valid": snapshot.citations_valid,
+        "citations_removed": snapshot.citations_removed,
+        "context_token_estimate": sum(
+            estimate_tokens(entry.excerpt) for entry in snapshot.sources
+        ),
+        "output_token_estimate": snapshot.output_token_estimate,
+        "search_calls": snapshot.search_calls,
+        "max_search_calls": snapshot.max_search_calls,
     }
     return Response(
         content=json.dumps(payload, indent=2) + "\n",
