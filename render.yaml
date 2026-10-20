@@ -1,0 +1,41 @@
+# Render Blueprint — one-click infrastructure for the Omnirush backend.
+# Connect this repo at https://dashboard.render.com -> New -> Blueprint and Render creates the
+# Docker web service below. Secrets marked `sync: false` are entered once in the dashboard and
+# are never stored in git.
+services:
+  - type: web
+    name: omnirush
+    runtime: docker
+    plan: 0.5c-512mb # Render "Starter" ($7/mo): 0.5 CPU / 512 MB — the cheapest Docker-capable plan
+    region: singapore
+    repo: https://github.com/ryan1234814/omnirush_buildathon.git
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health
+    autoDeployTrigger: commit
+    envVars:
+      # Real provider mode: Groq-hosted LLM via the OpenAI-compatible client + Tavily search.
+      - key: OPENAI_BASE_URL
+        value: https://api.groq.com/openai/v1
+      - key: LLM_MODEL
+        value: openai/gpt-oss-120b
+      - key: SEARCH_PROVIDER
+        value: tavily
+      - key: MOCK_MODE
+        value: "false"
+      - key: SCRAPLING_FALLBACK
+        value: "true"
+      # Persist run snapshots on the mounted disk so history survives restarts/deploys.
+      - key: RUNS_DIR
+        value: /var/data/runs
+      # Allow the Vercel-hosted UI to call this API cross-origin; "*" is fine (no cookies used).
+      - key: CORS_ORIGINS
+        value: "*"
+      # Secrets: enter real values in the Render dashboard after the first deploy.
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: TAVILY_API_KEY
+        sync: false
+    disk:
+      name: omnirush-runs
+      mountPath: /var/data
+      sizeGB: 1
