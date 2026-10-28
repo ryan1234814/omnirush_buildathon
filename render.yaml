@@ -13,15 +13,17 @@ services:
     healthCheckPath: /api/health
     autoDeployTrigger: commit
     envVars:
-      # Real provider mode: Groq-hosted LLM via the OpenAI-compatible client + Tavily search.
+      # Default Render deployment mode: deterministic mock reports that always work without
+      # external API credentials. Switch back to real provider mode only after the keys are
+      # confirmed in the Render dashboard and the service health endpoint reports configured=true.
+      - key: MOCK_MODE
+        value: "true"
+      - key: SEARCH_PROVIDER
+        value: mock
       - key: OPENAI_BASE_URL
         value: https://api.groq.com/openai/v1
       - key: LLM_MODEL
         value: openai/gpt-oss-120b
-      - key: SEARCH_PROVIDER
-        value: tavily
-      - key: MOCK_MODE
-        value: "false"
       - key: SCRAPLING_FALLBACK
         value: "true"
       # Persist run snapshots on the mounted disk so history survives restarts/deploys.
